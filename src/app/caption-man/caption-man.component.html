@@ -89,9 +89,9 @@
         <div class="captionz-bounce2"></div>
         <div class="captionz-bounce3"></div>
       </div>
-      <ng-container *ngIf="!loading && captionLines">
+      <ng-container *ngIf="!loading && comments">
         <li
-          *ngFor="let line of captionLines; let i = index"
+          *ngFor="let line of comments; let i = index"
           class="list-group-item"
           [class]="{
             'repeat-b': i === repeatB,
@@ -101,14 +101,14 @@
           [attr.data-index]="i"
         >
           <span class="line-actions">
-            <a
+            <!-- <a
               href="javascript:void(0)"
               class="line-repeat"
               (click)="repeat($event, i)"
               title="Repeat this {{ Math.round(line.dur) }}''"
             >
               {{ getRepeatLetter(i) }}
-            </a>
+            </a> -->
             <a
               href="javascript:void(0)"
               class="line-seek"
@@ -128,18 +128,15 @@
             >{{ line.start | minsec }}</a
           >
           <span
+            class="line-text list-group-item-text username-text"
+            [innerHTML]="line.username | unescape"
+          ></span
+          >:&nbsp;&nbsp;
+
+          <span
             class="line-text list-group-item-text language-text"
             [innerHTML]="line.text | unescape"
           ></span>
-          <span *ngIf="captionLines2[i]">
-            <span *ngFor="let text of captionLines2[i].texts">
-              <br />
-              <span
-                class="line-text list-group-item-text language-text2"
-                [innerHTML]="text | unescape"
-              ></span>
-            </span>
-          </span>
         </li>
       </ng-container>
     </ul>
@@ -148,7 +145,7 @@
       <div class="container-fluid">
         <div class="navbar-header">
           <span class="navbar-brand">{{
-            registerred ? "Who are you?" : username
+            registerred ? username : "Who are you?"
           }}</span>
         </div>
 

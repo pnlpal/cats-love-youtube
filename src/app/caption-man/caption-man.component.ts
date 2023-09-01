@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { YtbService } from '../ytb.service';
 import { FormControl } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import * as io from 'socket.io-client';
 
 declare var $: any;
 declare var ResizeObserver: any;
@@ -25,6 +26,10 @@ export class CaptionManComponent implements OnInit {
 
   commentCtrl = new FormControl()
   currentComment = ""
+  comments = []
+
+  socket = null 
+
 
   repeatA: number 
   repeatB: number 
@@ -90,7 +95,8 @@ export class CaptionManComponent implements OnInit {
       .subscribe((comment: string) => {
         this.currentComment = comment;        
       });
-
+    
+    this.socket = io.connect('http://localhost:3000');
     this.initYtb();
   }
 
@@ -102,6 +108,22 @@ export class CaptionManComponent implements OnInit {
 
   comment() {
     console.log('comment: ', this.currentComment);
+    if (!this.currentComment) return;
+
+    const comment = {
+      start: this.ytb.getCurrentTime,
+      text: this.currentComment, 
+      username: this.username
+    }
+
+    const insertIdx = this.comments.findIndex(line => line.start > comment.start);
+    if (insertIdx > -1) {
+      this.comments.splice(insertIdx, 0, comment);
+    } else {
+      this.comments.push(comment);
+    }
+    this.currentComment = ""
+    this.commentCtrl.setValue('');
   }
 
   isSmallScreen() {
@@ -205,30 +227,12 @@ export class CaptionManComponent implements OnInit {
       this.reset();
 
       try {
-        const tracksResult = await this.ytb.getCaptionTracks();
-        if (vid !== this.currentVid) return;
-        this.captionTracks = tracksResult;
-          
-        let backToDefault = true;
-        this.defaultLanguages.forEach(name => {
-          const track = this.captionTracks.find(n => n.name === name);
-          if (track)  {
-            backToDefault = false;
-            this.changeCaption(null,  track, vid);
-          }
-        });
-
-        if (backToDefault) {
-          const track = this.captionTracks.find(n => n.languageCode === 'en-US') 
-            || this.captionTracks.find(n => n.languageCode.startsWith('en'));
-          if (track) this.changeCaption(null, track, vid);
-          else this.loading = false;
-        }
+        await this.getComments();
       } catch (err) {
         this.error = err;
-        this.loading = false;
       }
     });
+
     await this.ytb.init();
 
     const setCaptionsHeight = () => {
@@ -243,7 +247,8 @@ export class CaptionManComponent implements OnInit {
     this.changeFontSize(this.settings.fontSize);
 
     this.ytb.onPlaying = (t: number) => {
-      if (this.captionLines.length) {
+      if (this.comments.length) {
+        console.log('on playing: ', t);
         this.scrollToTime(t);
       }
     };
@@ -259,17 +264,40 @@ export class CaptionManComponent implements OnInit {
       }
     };
   }
+
+  async getComments() {
+    this.comments = [
+      {
+        username: 'River',
+        text: "Hello world!",
+        start: 1
+      },
+      {
+        username: 'Lybron',
+        text: "Welcome to Cats Love Youtube!",
+        start: 5.45
+      },
+      {
+        username: 'Stranger',
+        text: "Tack Tack!!",
+        start: 10.45
+      }
+    ]
+    this.loading = false;
+  }
+
   setLineTimer () {
     clearTimeout(this.currentLineTimer);
+    const lineDuration = 3;
 
     const repeatLastLine = this.currentLineNum === this.repeatB;
 
-    let sec = this.currentLine.start + this.currentLine.dur - this.currentTime + 0.1;
+    let sec = this.currentLine.start + lineDuration - this.currentTime + 0.1;
     if (sec < 0.1) sec = 0.1;
 
-    let nextLine = this.captionLines[this.currentLineNum + 1];
+    let nextLine = this.comments[this.currentLineNum + 1];
     if (nextLine && !repeatLastLine) {
-      sec += (nextLine.start - (this.currentLine.start + this.currentLine.dur)) / 2;
+      sec += (nextLine.start - (this.currentLine.start + lineDuration)) / 2;
       // console.log(`current: ${this.currentTime}, start: ${this.currentLine.start}, dur: ${this.currentLine.dur}, wait: ${sec}`);
     } else if (!nextLine && !repeatLastLine) {
       console.log(`End of line, current: ${this.currentTime}`);
@@ -290,7 +318,7 @@ export class CaptionManComponent implements OnInit {
       $(`ul.caption-ul .list-group-item[data-index="${this.currentLineNum}"]`).removeClass('active');
     }
 
-    this.currentLine = this.captionLines[idx];
+    this.currentLine = this.comments[idx];
     this.currentLineNum = idx;
 
     if (this.currentLine) {
@@ -311,12 +339,14 @@ export class CaptionManComponent implements OnInit {
     }
   }
   scrollToTime(time: number) {
-    const isLineInTime = (currentTime, line, prevL) => {
-      if (currentTime >= line.start && currentTime < (line.start + line.dur)) {
+
+    const isLineInTime = (currentTime, line, nextL) => {
+      // within 3 seconds
+      if (currentTime >= line.start && currentTime < (line.start + 3)) {
         return true;
-      } else if (prevL && currentTime >= (prevL.start + prevL.dur) && currentTime < line.start) {
+      } else if (nextL && currentTime >= line.start && currentTime < nextL.start) {
         return true;
-      } else if (!prevL && currentTime < line.start) {
+      } else if (!nextL) {
         return true;
       }
       return false;
@@ -324,14 +354,14 @@ export class CaptionManComponent implements OnInit {
 
     const findCurrentLineIndex = (currentTime, lastIdx = null) => {
       let start = lastIdx || 0;
-      for (let i = 0; i < this.captionLines.length; i++) {
-        if (isLineInTime(currentTime, this.captionLines[start], this.captionLines[start - 1]))
+      for (let i = 0; i < this.comments.length; i++) {
+        if (isLineInTime(currentTime, this.comments[start], this.comments[start + 1]))
           return start;
 
         start += 1;
-        if (start === this.captionLines.length) start = 0;
+        if (start === this.comments.length) start = 0;
       }
-      return this.captionLines.length - 1;
+      return this.comments.length - 1;
     };
 
     this.currentTime = time;
@@ -340,7 +370,7 @@ export class CaptionManComponent implements OnInit {
   }
 
   seekToLine(i) {
-    const line = this.captionLines[i];
+    const line = this.comments[i];
     this.ytb.seekTo(line.start);
 
     this.currentTime = line.start;

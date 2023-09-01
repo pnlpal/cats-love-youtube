@@ -16,6 +16,7 @@ export class YtbService {
 
   playLink = ''
 
+
   private _videoId: BehaviorSubject<string> = new BehaviorSubject('');
   public readonly videoId: Observable<string> = this._videoId.asObservable();
 
@@ -28,7 +29,7 @@ export class YtbService {
     return new Promise((resolve, reject) => {
       (window as any).onYouTubeIframeAPIReady = () => {
         this._videoId.next('J_z-W4UVHkw');
-        
+
         this.player = new YT.Player('ytb-player', {
           width: '100%',
           playerVars: {
@@ -36,25 +37,25 @@ export class YtbService {
           },
           videoId: this._videoId.getValue(),
           events: {
-            'onReady11': () => {
+            'onReady': () => {
               console.log('ready.....');
 
               // for debugging 
               (window as any).player = this.player;
 
-              const lastVid = localStorage.getItem('last-video-id') || 'J_z-W4UVHkw';
-              const lastPlaylistId = localStorage.getItem('last-playlist-id');
+              // const lastVid = localStorage.getItem('last-video-id') || 'J_z-W4UVHkw';
+              // const lastPlaylistId = localStorage.getItem('last-playlist-id');
 
-              if (lastPlaylistId) {
-                this.loadPlaylistById(lastPlaylistId, parseInt(localStorage.getItem('last-video-index-in-playlist')));
-              } else if (lastVid) {
-                this.loadVideoById(lastVid);
-              }
+              // if (lastPlaylistId) {
+              //   this.loadPlaylistById(lastPlaylistId, parseInt(localStorage.getItem('last-video-index-in-playlist')));
+              // } else if (lastVid) {
+              //   this.loadVideoById(lastVid);
+              // }
 
               resolve();
             },
             'onStateChange': (ev) => {
-              // console.log('State Change: ', ev.data);
+              console.log('State Change: ', ev.data);
 
               if (ev.data === -1 && this._playlistId.getValue()) {
                 // When the player first loads a video, it will broadcast an unstarted (-1) event.
@@ -95,6 +96,12 @@ export class YtbService {
       tag.src = "https://www.youtube.com/iframe_api";
       const firstScriptTag = document.getElementsByTagName('script')[0];
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+      setInterval(() => {
+        if (this.onPlaying && this.playing) {
+          this.onPlaying(this.player.getCurrentTime());
+        }
+      }, 1000);
     });
   }
 

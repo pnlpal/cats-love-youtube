@@ -96,14 +96,41 @@ export class CaptionManComponent implements OnInit {
         this.currentComment = comment;        
       });
     
-    this.socket = io.connect('http://localhost:3000');
+    this.socket = io.connect('http://192.168.1.205:3000');
+    this.socket.on('connect', () => {
+      if (this.currentVid){
+       this.socket.emit('joinRoom', this.currentVid);
+      }
+    })
+    this.socket.on('comment', (comment) => {
+      console.log('received msg: ', comment?.text);
+      if (comment?.videoId === this.currentVid) {
+        this.insertComment(comment);
+      }
+    })
+    this.socket.on('registerred', username => {
+      this.username = username;
+      localStorage.username = username;
+      this.registerred = true 
+    })
+
+    this.socket.on('comments', comments => {
+      this.comments = comments;
+      this.loading = false;
+    })
+
+    this.socket.on('error', err => {
+      this.error = err;
+    })
     this.initYtb();
   }
 
   register() {
     console.log('register user: ', this.username);
-    localStorage.username = this.username;
-    this.registerred = true 
+
+    if (!this.registerred) {
+      this.socket.emit('register', this.username);
+    }
   }
 
   comment() {
@@ -111,19 +138,25 @@ export class CaptionManComponent implements OnInit {
     if (!this.currentComment) return;
 
     const comment = {
-      start: this.ytb.getCurrentTime,
+      start: this.ytb.getCurrentTime() || 0,
       text: this.currentComment, 
-      username: this.username
+      username: this.username,
+      videoId: this.currentVid
     }
 
-    const insertIdx = this.comments.findIndex(line => line.start > comment.start);
-    if (insertIdx > -1) {
-      this.comments.splice(insertIdx, 0, comment);
-    } else {
-      this.comments.push(comment);
-    }
+    this.socket.emit('message', comment);
+
+    this.insertComment(comment);
     this.currentComment = ""
     this.commentCtrl.setValue('');
+  }
+  insertComment(comment) {
+    const insertIdx = this.comments.findIndex(line => line.start > comment.start);
+        if (insertIdx > -1) {
+          this.comments.splice(insertIdx, 0, comment);
+        } else {
+          this.comments.push(comment);
+        }
   }
 
   isSmallScreen() {
@@ -226,11 +259,7 @@ export class CaptionManComponent implements OnInit {
       this.currentVid = vid;
       this.reset();
 
-      try {
-        await this.getComments();
-      } catch (err) {
-        this.error = err;
-      }
+      this.socket.emit('joinRoom', vid);
     });
 
     await this.ytb.init();

@@ -2,7 +2,6 @@ const express = require("express");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 const { MongoClient } = require("mongodb");
-const { error } = require("console");
 
 const app = express();
 const httpServer = createServer(app);
@@ -25,6 +24,9 @@ MongoClient.connect(mongoURL, { useUnifiedTopology: true }, (err, client) => {
 
   console.log("Connected to MongoDB");
   db = client.db(dbName);
+
+  const Comment = db.collection("Comment");
+  Comment.createIndex({ videoId: 1, start: 1, createdAt: 1 });
 });
 
 // Express routes
@@ -34,7 +36,7 @@ app.get("/", (req, res) => {
 
 // Mongo
 const createUser = async (username) => {
-  const User = db.collection("User");
+  // const User = db.collection("User");
 
   try {
     if (username.length < 75) {
@@ -70,7 +72,9 @@ const handleMessage = ({ start, text, username, videoId }, io, socket) => {
 const getMessages = async (videoId) => {
   try {
     const Comment = db.collection("Comment");
-    return await Comment.find({ videoId }).toArray();
+    return await Comment.find({ videoId })
+      .sort({ start: 1, createdAt: 1 })
+      .toArray();
   } catch (err) {
     console.log("Error getting messages", err);
   }

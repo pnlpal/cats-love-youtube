@@ -96,7 +96,7 @@ export class CaptionManComponent implements OnInit {
         this.currentComment = comment;        
       });
     
-    this.socket = io.connect('http://192.168.1.205:3000');
+    this.socket = io.connect('http://192.168.1.169:3000');
     this.socket.on('connect', () => {
       if (this.currentVid){
        this.socket.emit('joinRoom', this.currentVid);
@@ -128,7 +128,7 @@ export class CaptionManComponent implements OnInit {
   register() {
     console.log('register user: ', this.username);
 
-    if (!this.registerred) {
+    if (!this.registerred && this.username) {
       this.socket.emit('register', this.username);
     }
   }

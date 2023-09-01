@@ -1,0 +1,56 @@
+<div
+    class="modal fade settings-modal"
+    role="dialog"
+>
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button
+                    type="button"
+                    class="close"
+                    data-dismiss="modal"
+                    aria-label="Close"
+                >
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">Settings</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-horizontal">
+                    <div class="form-group">
+                      <label for="enableDarkMode" class="col-xs-6 control-label">Dark mode</label>
+                      <div class="col-xs-6">
+                        <input type="checkbox" 
+                        name="darkMode"
+                        [checked]="settings.darkMode" 
+                        class="form-control" 
+                        id="enableDarkMode" data-toggle="toggle">
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="enableTimeStamp" class="col-xs-6 control-label">Timestamp</label>
+                      <div class="col-xs-6">
+                        <input type="checkbox" 
+                        name="timestamp"
+                        [checked]="settings.timestamp" 
+                        class="form-control" id="enableTimeStamp" data-toggle="toggle">
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="font-size" class="col-xs-6 control-label">Font size</label>
+                        <div class="col-xs-6">
+                          <input type="number" 
+                          name="fontSize"
+                          [value]="settings.fontSize" 
+                          class="form-control" id="font-size" data-toggle="toggle">
+                        </div>
+                      </div>
+                </div>
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+<!-- /.modal -->

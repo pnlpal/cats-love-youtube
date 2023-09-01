@@ -1,0 +1,107 @@
+<div class="panel panel-default">
+    <div class="panel-body">
+        <nav class="navbar navbar-inverse">
+            <div class="container-fluid">
+                <ul class="nav navbar-nav navbar-left">
+                    <li>
+                        <a href="javascript:void(0);" (click)="fullscreen()" title="Fullscreen">
+                            <strong>F</strong>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="javascript:void(0);" (click)="openSettings()" title="Settings">
+                            <strong>S</strong>
+                        </a>
+                    </li>
+                    <li *ngIf="repeatA >= 0 || repeatB >= 0">
+                        <a href="javascript:void(0);" 
+                        (click)="clearRepeat()" 
+                        title="Clear repeat">
+                            <strong *ngIf="repeatA >= 0">A</strong>
+                            - 
+                            <strong *ngIf="repeatB >= 0">{{ repeatB === repeatA ? 'A' : 'B'}}</strong>
+                        </a>
+                    </li>
+                </ul>
+
+                <ul class="nav navbar-nav navbar-right" [class.dropup]="isSmallScreen()">
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                            <span class="hidden-sm hidden-xs">{{ trackName || "Captions" }}</span>
+                            <span class="visible-sm-inline visible-xs-inline">Captions({{ selectedTracks.length }}/{{captionTracks.length}})</span>
+                            <span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li *ngFor="let track of captionTracks">
+                                <a href="javascript:void(0);" (click)="changeCaption($event, track)" title="{{track.nameLocal}}">
+                                    <input type="checkbox" aria-label="..."
+                                        [checked]="defaultLanguages.includes(track.name)">
+                                    {{track.name}}
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        
+            
+        <ul class="caption-ul list-group" [class.dark-mode]="settings.darkMode">
+            <div class="well well-sm text-danger hidden">
+                <p class="text-danger">
+                    Google has limited the api requests of getting captions from a centralized server. Please install 
+                    <a href="https://github.com/pnlpal/dictionaries"
+                        target="_blank"
+                        class="link-github"
+                        ><i
+                        class="fa fa-github fa-2x"
+                        title="Find download links on github"
+                        ></i>
+                        Dictionariez 
+                    </a>
+                    to resolve this problem. Moreover, it can help you look up new words and export them into Anki.
+                </p>
+            </div>
+            <p *ngIf="error && !loading" class="well well-sm text-warning">
+                ERROR: {{ error.message || error }}
+            </p>
+            <div class="captionz-spinner" *ngIf="loading">
+                <div class="captionz-bounce1"></div>
+                <div class="captionz-bounce2"></div>
+                <div class="captionz-bounce3"></div>
+            </div>
+            <ng-container *ngIf="!loading && captionLines">
+                <li *ngFor="let line of captionLines; let i=index" 
+                class="list-group-item" 
+                [class]="{'repeat-b': i === repeatB, 'repeat-a': i===repeatA, 'line-in-repeat': isLineInRepeat(i)}"
+                [attr.data-index]="i">
+                    <span class="line-actions">
+                        <a href="javascript:void(0)" class="line-repeat"
+                        (click)="repeat($event, i)"
+                        title="Repeat this {{ Math.round(line.dur) }}''">
+                            {{ getRepeatLetter(i) }}
+                        </a>
+                        <a href="javascript:void(0)" class="line-seek" 
+                        [class.hidden]="settings.timestamp"
+                        (click)="seekToLine(i)"
+                        title="Seek to {{ Math.round(line.start) }}''">
+                            ≻
+                        </a>
+                    </span>
+                    <a href="javascript:void(0)" class="line-timestamp" 
+                        [class.hidden]="!settings.timestamp"
+                        (click)="seekToLine(i)"
+                        title="Seek to {{ Math.round(line.start) }}''">{{line.start | minsec }}</a>
+                    <span class="line-text list-group-item-text language-text" [innerHTML]="line.text | unescape"></span>
+                    <span *ngIf="captionLines2[i]">
+                        <span *ngFor="let text of captionLines2[i].texts">
+                            <br>
+                            <span class="line-text list-group-item-text language-text2" [innerHTML]="text | unescape"></span>
+                        </span>
+                    </span>
+                </li>
+            </ng-container>
+        </ul>
+    </div>
+    <app-settings [settings]="settings" (changeFont)="changeFontSize($event)"></app-settings>
+</div>

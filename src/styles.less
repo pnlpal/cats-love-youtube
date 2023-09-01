@@ -1,0 +1,28 @@
+/* You can add global styles to this file, and also import other style files */
+#ytb-player {
+    border-radius: 4px;
+}
+
+@media (min-width: 768px) {
+    .in-fullscreen {
+        .ytb-player-wrapper, .caption-man-wrapper {
+            position: relative;
+            top: 50%;
+            -webkit-transform: translateY(-50%);
+            -ms-transform: translateY(-50%);
+            transform: translateY(-50%);
+
+            #ytb-player, .panel, nav {
+                border-radius: 0;
+            }
+        }
+    }
+}
+@media (max-width: 768px) {
+    .ytb-player-wrapper, .caption-man-wrapper {
+        padding: 0;
+        #ytb-player, .panel, nav {
+            border-radius: 0;
+        }
+    }
+}

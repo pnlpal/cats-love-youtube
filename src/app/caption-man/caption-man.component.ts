@@ -265,7 +265,7 @@ export class CaptionManComponent implements OnInit {
     await this.ytb.init();
 
     const setCaptionsHeight = () => {
-      const h = $("#ytb-player").height() - 50;
+      const h = $("#ytb-player").height() - 100;
       $("ul.caption-ul").css('height', `${h}px`);
       if (!this.isSmallScreen())
         this.currentLineTop = h * 2/5;

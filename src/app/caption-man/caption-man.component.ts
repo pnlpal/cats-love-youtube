@@ -96,7 +96,7 @@ export class CaptionManComponent implements OnInit {
         this.currentComment = comment;        
       });
     
-    this.socket = io.connect('http://192.168.1.169:3000');
+    this.socket = io.connect(`${location.hostname}:3000/`);
     this.socket.on('connect', () => {
       if (this.currentVid){
        this.socket.emit('joinRoom', this.currentVid);

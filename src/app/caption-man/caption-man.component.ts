@@ -1,5 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { YtbService } from '../ytb.service';
+import { FormControl } from '@angular/forms';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 declare var $: any;
 declare var ResizeObserver: any;
@@ -15,6 +17,14 @@ export class CaptionManComponent implements OnInit {
   originalCaptionLines2 = []
   selectedTracks = []
   trackName = ''
+
+  username = localStorage.username || ''
+  usernameCtrl = new FormControl()
+  invalidUsername = false
+  registerred = !!localStorage.username
+
+  commentCtrl = new FormControl()
+  currentComment = ""
 
   repeatA: number 
   repeatB: number 
@@ -66,8 +76,32 @@ export class CaptionManComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.defaultLanguages = JSON.parse(localStorage.getItem('last-language-names') || "null") || [];
+    this.usernameCtrl.valueChanges
+      .pipe(debounceTime(200),
+        distinctUntilChanged())
+      .subscribe((username: string) => {
+        this.invalidUsername = false;
+        this.username = username;        
+      });
+
+    this.commentCtrl.valueChanges
+      .pipe(debounceTime(200),
+        distinctUntilChanged())
+      .subscribe((comment: string) => {
+        this.currentComment = comment;        
+      });
+
     this.initYtb();
+  }
+
+  register() {
+    console.log('register user: ', this.username);
+    localStorage.username = this.username;
+    this.registerred = true 
+  }
+
+  comment() {
+    console.log('comment: ', this.currentComment);
   }
 
   isSmallScreen() {
@@ -164,7 +198,6 @@ export class CaptionManComponent implements OnInit {
   }
 
   async initYtb() {
-    await this.ytb.init();
     this.ytb.videoId.subscribe(async (vid) => {
       console.log('video id: ', vid);
       if (!vid) return;
@@ -196,6 +229,7 @@ export class CaptionManComponent implements OnInit {
         this.loading = false;
       }
     });
+    await this.ytb.init();
 
     const setCaptionsHeight = () => {
       const h = $("#ytb-player").height() - 50;

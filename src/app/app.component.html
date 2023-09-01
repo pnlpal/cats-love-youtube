@@ -4,54 +4,88 @@
       <div class="well well-lg">
         <div class="input-group hidden-xs">
           <h2 class="input-group-addon" id="captionz-title">Captionz</h2>
-          <input type="text" 
-            class="form-control video-url" 
+          <input
+            type="text"
+            class="form-control video-url"
             [class.invalid-url]="invalidUrl"
             [formControl]="videoUrlCtrl"
-            placeholder="Enter YouTube video or playlist URL here..." 
-            aria-describedby="captionz-title">
+            placeholder="Enter YouTube video or playlist URL here..."
+            aria-describedby="captionz-title"
+          />
 
-          <a class="btn input-group-addon"
+          <!-- <a class="btn input-group-addon"
           (click)="openShares()"
-          >Share it!</a>
+          >Share it!</a> -->
         </div>
         <div class="visible-xs">
-          <input type="text" 
-            class="form-control video-url" 
+          <input
+            type="text"
+            class="form-control video-url"
             [class.invalid-url]="invalidUrl"
             [formControl]="videoUrlCtrl"
-            placeholder="YouTube video URL..." 
-            aria-describedby="captionz-title">
+            placeholder="YouTube video URL..."
+            aria-describedby="captionz-title"
+          />
         </div>
 
         <p class="text-muted dictionaries-tip hidden-sm hidden-xs">
-          Tip: Use open-source 
-          <a href="https://github.com/pnlpal/dictionaries"
+          Tip: Use open-source
+          <a
+            href="https://github.com/pnlpal/dictionaries"
             target="_blank"
             class="link-github"
             ><i
               class="fa fa-github fa-2x"
               title="Find download links on github"
             ></i>
-            Dictionariez 
+            Dictionariez
           </a>
-          to look up new words, export to Anki and more.
-          Visit <a href="https://pnlpal.dev/category/5/captionz-trove" target="_blank">
-          Captionz Trove
-        </a> to find out more videos.
-        <a href="https://pnlpal.dev/category/3/feedback" target="_blank">
-          Any feedback?
-        </a> 
+          to look up new words, export to Anki and more. Visit
+          <a
+            href="https://pnlpal.dev/category/5/captionz-trove"
+            target="_blank"
+          >
+            Captionz Trove
+          </a>
+          to find out more videos.
+          <a href="https://pnlpal.dev/category/3/feedback" target="_blank">
+            Any feedback?
+          </a>
         </p>
         <div class="suggestions row">
           <div class="col-xs-6 visible-xs" *ngFor="let s of suggestions_xs">
-            <a href="javascript:void(0);" class="thumbnail" [title]="s.title" (click)="openSuggestion(s)">
-              <img src="{{ s.img || 'https://i.ytimg.com/vi/' + s.videoId + '/hqdefault.jpg' }}" alt="preview image">
+            <a
+              href="javascript:void(0);"
+              class="thumbnail"
+              [title]="s.title"
+              (click)="openSuggestion(s)"
+            >
+              <img
+                src="{{
+                  s.img ||
+                    'https://i.ytimg.com/vi/' + s.videoId + '/hqdefault.jpg'
+                }}"
+                alt="preview image"
+              />
             </a>
           </div>
-          <div class="col-md-2 col-sm-2 hidden-xs" *ngFor="let s of suggestions">
-            <a href="javascript:void(0);" class="thumbnail" [title]="s.title" (click)="openSuggestion(s)">
-              <img src="{{ s.img || 'https://i.ytimg.com/vi/' + s.videoId + '/hqdefault.jpg' }}" alt="preview image">
+          <div
+            class="col-md-2 col-sm-2 hidden-xs"
+            *ngFor="let s of suggestions"
+          >
+            <a
+              href="javascript:void(0);"
+              class="thumbnail"
+              [title]="s.title"
+              (click)="openSuggestion(s)"
+            >
+              <img
+                src="{{
+                  s.img ||
+                    'https://i.ytimg.com/vi/' + s.videoId + '/hqdefault.jpg'
+                }}"
+                alt="preview image"
+              />
             </a>
           </div>
         </div>
@@ -69,5 +103,5 @@
     </div>
   </div>
 
-  <app-shares></app-shares>
+  <!-- <app-shares></app-shares> -->
 </div>

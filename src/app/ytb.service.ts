@@ -27,12 +27,14 @@ export class YtbService {
   init() {
     return new Promise((resolve, reject) => {
       (window as any).onYouTubeIframeAPIReady = () => {
+        this._videoId.next('J_z-W4UVHkw');
+        
         this.player = new YT.Player('ytb-player', {
           width: '100%',
           playerVars: {
             playsinline: 1,
           },
-          videoId: 'J_z-W4UVHkw',
+          videoId: this._videoId.getValue(),
           events: {
             'onReady11': () => {
               console.log('ready.....');

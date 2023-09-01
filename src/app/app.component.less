@@ -1,66 +1,107 @@
 #ytb-player-container {
-    .well-lg {
-        @media (max-width: 768px) { // on xs screen
-            padding: 15px;
-        }
+  .well-lg {
+    @media (max-width: 768px) {
+      // on xs screen
+      padding: 15px;
     }
-    #captionz-title {
-        font-size: 18px;
-        font-weight: 700;
+  }
+  #captionz-title {
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .video-url {
+    &.invalid-url {
+      border-color: red;
+      box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px red;
     }
-    .video-url {
-        &.invalid-url {
-            border-color: red;
-            box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px red;
-        }
-    }
-    .dictionaries-tip {
-        margin-top: 10px;
-        margin-bottom: 0;
-    }
-    .suggestions {
-        margin-top: 10px;
+  }
+  .dictionaries-tip {
+    margin-top: 10px;
+    margin-bottom: 0;
+  }
+  .suggestions {
+    margin-top: 10px;
 
-        .thumbnail {
-            margin-bottom: 0;
-            img {
-                // width: 110px;
-                object-fit: cover;
-                width: 115px;
-                height: 62px;
-                object-position: 100% 50%;
+    .thumbnail {
+      margin-bottom: 0;
+      img {
+        // width: 110px;
+        object-fit: cover;
+        width: 115px;
+        height: 62px;
+        object-position: 100% 50%;
 
-                @media (max-width: 992px) { // on sm screen
-                    height: 48px;
-                }
-                @media (max-width: 768px) { // on xs screen
-                    height: 62px;
-                }
-            }
+        @media (max-width: 992px) {
+          // on sm screen
+          height: 48px;
         }
+        @media (max-width: 768px) {
+          // on xs screen
+          height: 62px;
+        }
+      }
+    }
+  }
+
+  .fullscreen-wrapper {
+    &.in-fullscreen {
+      .ytb-player-wrapper {
+        padding: 0;
+      }
+
+      .caption-man-wrapper {
+        padding: 0;
+      }
     }
 
-    .fullscreen-wrapper {
-        &.in-fullscreen {
-            .ytb-player-wrapper {
-                padding: 0;
-            }
-        
-            .caption-man-wrapper {
-                padding: 0;        
-            }
-        }
+    @media (min-width: 768px) {
+      // on md screen
+      .ytb-player-wrapper {
+        padding-left: 0;
+        padding-right: 5px;
+      }
 
-        @media (min-width: 768px) { // on md screen
-            .ytb-player-wrapper {
-                padding-left: 0;
-                padding-right: 5px;
-            }
-
-            .caption-man-wrapper {
-                padding-left: 5px;        
-                padding-right: 0;
-            }
-        }
+      .caption-man-wrapper {
+        padding-left: 5px;
+        padding-right: 0;
+      }
     }
+  }
+}
+
+.ul-bullets {
+  position: absolute;
+  width: 100%;
+  z-index: 9999;
+  //   top: 40px;
+  background-color: transparent;
+
+  max-height: 100%;
+  overflow: hidden;
+
+  span {
+    font-family: "Comic Sans MS", "Comic Sans", cursive;
+    font-size: 24px;
+    // max-height: 30px;
+    background-color: transparent;
+    border: none;
+    color: lightblue;
+    // filter: invert(1) grayscale(1) contrast(9);
+    filter: invert(1) grayscale(1) contrast(9) drop-shadow(0.05em 0.05em orange);
+
+    left: 100%;
+    // transition: left 3s linear;
+    animation: 5s linear 1 alternate swing;
+  }
+
+  @keyframes swing {
+    from {
+      transform: translateX(0);
+      left: 100%;
+    }
+    to {
+      left: 0%;
+      transform: translateX(-100%);
+    }
+  }
 }

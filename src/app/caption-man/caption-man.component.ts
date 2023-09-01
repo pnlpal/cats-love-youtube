@@ -279,6 +279,15 @@ export class CaptionManComponent implements OnInit {
       if (this.comments.length) {
         console.log('on playing: ', t);
         this.scrollToTime(t);
+
+        this.ytb.bullets = this.comments.filter(line => {
+          if (line.start < t) {
+            const diff = (t - line.start);
+            if (diff < 5) {
+              return line;
+            }
+          }
+        })
       }
     };
     this.ytb.onPaused = () => {

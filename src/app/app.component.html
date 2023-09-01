@@ -94,10 +94,21 @@
   </div>
   <div class="row fullscreen-wrapper" [class.in-fullscreen]="inFullscreen">
     <div class="col-md-8 col-sm-8 col-xs-12 ytb-player-wrapper">
+      <div class="ul-bullets" *ngIf="bullets">
+        <span
+          *ngFor="let line of bullets; let i = index"
+          class="list-group-item bullet-comment"
+          [attr.data-index]="i"
+        >
+          <span class="bullet-text"> {{ line.text }}</span>
+        </span>
+      </div>
+
       <div class="embed-responsive embed-responsive-16by9">
         <div id="ytb-player"></div>
       </div>
     </div>
+
     <div class="col-md-4 col-sm-4 col-xs-12 caption-man-wrapper">
       <app-caption-man></app-caption-man>
     </div>

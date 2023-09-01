@@ -16,6 +16,8 @@ export class YtbService {
 
   playLink = ''
 
+  bullets = [];
+
 
   private _videoId: BehaviorSubject<string> = new BehaviorSubject('');
   public readonly videoId: Observable<string> = this._videoId.asObservable();

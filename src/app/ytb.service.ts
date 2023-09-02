@@ -31,14 +31,11 @@ export class YtbService {
   init() {
     return new Promise((resolve, reject) => {
       (window as any).onYouTubeIframeAPIReady = () => {
-        this._videoId.next('J_z-W4UVHkw');
-
         this.player = new YT.Player('ytb-player', {
           width: '100%',
           playerVars: {
             playsinline: 1,
           },
-          videoId: this._videoId.getValue(),
           events: {
             onReady: () => {
               console.log('ready.....');
@@ -46,16 +43,22 @@ export class YtbService {
               // for debugging
               (window as any).player = this.player;
 
-              // const lastVid = localStorage.getItem('last-video-id') || 'J_z-W4UVHkw';
-              // const lastPlaylistId = localStorage.getItem('last-playlist-id');
+              const lastVid =
+                localStorage.getItem('last-video-id') || 'J_z-W4UVHkw';
+              const lastPlaylistId = localStorage.getItem('last-playlist-id');
 
-              // if (lastPlaylistId) {
-              //   this.loadPlaylistById(lastPlaylistId, parseInt(localStorage.getItem('last-video-index-in-playlist')));
-              // } else if (lastVid) {
-              //   this.loadVideoById(lastVid);
-              // }
+              if (lastPlaylistId) {
+                this.loadPlaylistById(
+                  lastPlaylistId,
+                  parseInt(localStorage.getItem('last-video-index-in-playlist'))
+                );
+                this.player.mute();
+              } else if (lastVid) {
+                this.loadVideoById(lastVid);
+                this.player.mute();
+              }
 
-              resolve();
+              resolve({ lastPlaylistId, lastVid });
             },
             onStateChange: (ev) => {
               console.log('State Change: ', ev.data);

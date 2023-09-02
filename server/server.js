@@ -46,8 +46,15 @@ const createUser = async ({ username, videoId }) => {
   return username;
 };
 
-const handleMessage = ({ start, text, username, videoId }, socket) => {
+const handleMessage = async ({ start, text, username, videoId }, socket) => {
   try {
+    if (!text?.length || !videoId?.length || !username?.length) {
+      throw new Error("Comment is invalid!");
+    }
+    if (text.length > 140) {
+      throw new Error("Please don't comment over 140 characters!");
+    }
+
     const ret = {
       start,
       text,
@@ -56,10 +63,12 @@ const handleMessage = ({ start, text, username, videoId }, socket) => {
       videoId,
     };
 
-    Comment.insertOne(ret);
+    await Comment.insertOne(ret);
     socket.to(videoId).emit("comment", ret);
+    socket.emit("comment", ret);
   } catch (err) {
-    console.log("Error handling comment:", err);
+    console.error("Error handling comment:", err);
+    socket.emit("error", { message: err.message });
   }
 };
 
@@ -69,7 +78,8 @@ const getMessages = async (videoId) => {
       .sort({ start: 1, createdAt: 1 })
       .toArray();
   } catch (err) {
-    console.log("Error getting messages", err);
+    console.error("Error getting messages", err);
+    socket.emit("error", { message: err.message });
   }
 };
 

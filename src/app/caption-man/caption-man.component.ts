@@ -151,7 +151,6 @@ export class CaptionManComponent implements OnInit {
 
     this.socket.emit('message', comment);
 
-    this.insertComment(comment);
     this.currentComment = '';
     this.commentCtrl.setValue('');
   }

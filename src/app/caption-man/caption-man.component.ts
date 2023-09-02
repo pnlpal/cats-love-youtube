@@ -59,6 +59,8 @@ export class CaptionManComponent implements OnInit {
   openedShareBefore = false;
   playerHeight = 0;
 
+  asciiCat = '';
+
   constructor(private ytb: YtbService, private cd: ChangeDetectorRef) {
     if (localStorage.getItem('captionz-settings'))
       this.settings = JSON.parse(localStorage.getItem('captionz-settings'));
@@ -104,6 +106,7 @@ export class CaptionManComponent implements OnInit {
         this.socket.emit('joinRoom', this.currentVid);
       }
     });
+    this.socket.on('welcome', ({ asciiCat }) => (this.asciiCat = asciiCat));
     this.socket.on('comment', (comment) => {
       console.log('received msg: ', comment?.text);
       if (comment?.videoId === this.currentVid) {

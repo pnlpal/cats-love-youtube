@@ -1,4 +1,5 @@
 const express = require("express");
+const { readFileSync } = require("fs");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 const { MongoClient } = require("mongodb");
@@ -10,6 +11,8 @@ const io = new Server(httpServer, {
     origin: "*",
   },
 });
+
+const asciiCat = readFileSync(__dirname + "/assets/ascii-cat.txt").toString();
 
 // Mongo config
 const mongoURL = "mongodb://localhost:27017";
@@ -86,6 +89,8 @@ const getMessages = async (videoId) => {
 // Socket.io
 io.on("connection", (socket) => {
   console.log("Connection started...");
+
+  socket.emit("welcome", { asciiCat });
 
   socket.on("register", ({ username, videoId }) => {
     createUser({ username, videoId })

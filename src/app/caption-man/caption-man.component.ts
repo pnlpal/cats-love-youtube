@@ -404,15 +404,13 @@ export class CaptionManComponent implements OnInit {
     }
   }
   scrollToTime(time: number) {
-    const isLineInTime = (currentTime, line, nextL) => {
-      // within 3 seconds
-      if (currentTime >= line.start && currentTime < line.start + 3) {
+    const isLineInTime = (line, nextL) => {
+      if (time < line.start) {
         return true;
-      } else if (
-        nextL &&
-        currentTime >= line.start &&
-        currentTime < nextL.start
-      ) {
+        // within 1 seconds
+      } else if (time >= line.start && time <= line.start + 1) {
+        return true;
+      } else if (nextL && time >= line.start && time < nextL.start) {
         return true;
       } else if (!nextL) {
         return true;
@@ -420,27 +418,11 @@ export class CaptionManComponent implements OnInit {
       return false;
     };
 
-    const findCurrentLineIndex = (currentTime, lastIdx = null) => {
-      let start = lastIdx || 0;
-      for (let i = 0; i < this.comments.length; i++) {
-        if (
-          isLineInTime(
-            currentTime,
-            this.comments[start],
-            this.comments[start + 1]
-          )
-        )
-          return start;
-
-        start += 1;
-        if (start === this.comments.length) start = 0;
-      }
-      return this.comments.length - 1;
-    };
-
     this.currentTime = time;
-    const idx = findCurrentLineIndex(this.currentTime, this.currentLineNum);
-    return this.scrollToLine(idx);
+    const idx = this.comments.findIndex((l, i) =>
+      isLineInTime(l, this.comments[i + 1])
+    );
+    if (idx > -1) this.scrollToLine(idx);
   }
 
   seekToLine(i) {

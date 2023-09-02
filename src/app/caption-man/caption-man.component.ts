@@ -6,6 +6,9 @@ import * as io from 'socket.io-client';
 
 declare var $: any;
 declare var ResizeObserver: any;
+
+const lineDuration = 10;  // seconds
+
 @Component({
   selector: 'app-caption-man',
   templateUrl: './caption-man.component.html',
@@ -283,7 +286,7 @@ export class CaptionManComponent implements OnInit {
         this.ytb.bullets = this.comments.filter(line => {
           if (line.start < t) {
             const diff = (t - line.start);
-            if (diff < 5) {
+            if (diff < lineDuration) {
               return line;
             }
           }
@@ -326,7 +329,6 @@ export class CaptionManComponent implements OnInit {
 
   setLineTimer () {
     clearTimeout(this.currentLineTimer);
-    const lineDuration = 3;
 
     const repeatLastLine = this.currentLineNum === this.repeatB;
 

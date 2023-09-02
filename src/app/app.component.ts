@@ -18,24 +18,7 @@ export class AppComponent {
   inFullscreen = false
   playingVideoOfParam = false
 
-  bullets = [
-    {
-        username: 'River',
-        text: "Hello world!",
-        start: 1,
-        x: '700px'
-      },
-      {
-        username: 'Lybron',
-        text: "Welcome to Cats Love Youtube!",
-        start: 5.45
-      },
-      {
-        username: 'Stranger',
-        text: "Tack Tack!!",
-        start: 10.45
-      }
-  ]
+  bullets = []
 
   suggestions_xs = [
     {

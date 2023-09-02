@@ -47,7 +47,11 @@
         <div class="captionz-bounce2"></div>
         <div class="captionz-bounce3"></div>
       </div>
-      <div *ngIf="!loading && !comments.length" class="first-comment-tip">
+      <div
+        *ngIf="!loading && !comments.length"
+        class="first-comment-tip"
+        [class.dark-mode]="settings.darkMode"
+      >
         <pre>{{ asciiCat }}</pre>
         <p>Be the first to comment on this video.</p>
         <p>And be nice.</p>

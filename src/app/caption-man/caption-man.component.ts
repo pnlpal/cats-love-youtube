@@ -131,7 +131,10 @@ export class CaptionManComponent implements OnInit {
     console.log('register user: ', this.username);
 
     if (!this.registerred && this.username) {
-      this.socket.emit('register', this.username);
+      this.socket.emit('register', {
+        username: this.username,
+        videoId: this.currentVid,
+      });
     }
   }
 

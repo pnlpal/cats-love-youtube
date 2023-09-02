@@ -4,7 +4,7 @@
 ![MongoDB](https://img.shields.io/badge/MongoDB-v3.7.3-green.svg)
 ![Angular](https://img.shields.io/badge/Angular-11-green.svg)
 
-![Cats Love YouTube](server/assets/cats-love-youtube.png)
+![Cats Love YouTube](src/assets/cats-love-youtube.png)
 
 # Development
 

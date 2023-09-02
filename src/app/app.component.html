@@ -80,6 +80,8 @@
           *ngFor="let line of bullets; let i = index"
           class="list-group-item bullet-comment"
           [attr.data-index]="i"
+          [attr.data-y]="line.yPos"
+          [style.top]="line.top"
         >
           <span class="bullet-text"> {{ line.text }}</span>
         </span>

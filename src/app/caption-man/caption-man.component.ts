@@ -7,65 +7,66 @@ import * as io from 'socket.io-client';
 declare var $: any;
 declare var ResizeObserver: any;
 
-const lineDuration = 10;  // seconds
+const lineDuration = 10; // seconds
+let lineYposTracker = 0;
 
 @Component({
   selector: 'app-caption-man',
   templateUrl: './caption-man.component.html',
-  styleUrls: ['./caption-man.component.less']
+  styleUrls: ['./caption-man.component.less'],
 })
 export class CaptionManComponent implements OnInit {
-  captionTracks = []
-  captionLines = []
-  captionLines2 = []
-  originalCaptionLines2 = []
-  selectedTracks = []
-  trackName = ''
+  captionTracks = [];
+  captionLines = [];
+  captionLines2 = [];
+  originalCaptionLines2 = [];
+  selectedTracks = [];
+  trackName = '';
 
-  username = localStorage.username || ''
-  usernameCtrl = new FormControl()
-  invalidUsername = false
-  registerred = !!localStorage.username
+  username = localStorage.username || '';
+  usernameCtrl = new FormControl();
+  invalidUsername = false;
+  registerred = !!localStorage.username;
 
-  commentCtrl = new FormControl()
-  currentComment = ""
-  comments = []
+  commentCtrl = new FormControl();
+  currentComment = '';
+  comments = [];
 
-  socket = null 
+  socket = null;
 
+  repeatA: number;
+  repeatB: number;
 
-  repeatA: number 
-  repeatB: number 
+  currentVid = '';
+  currentTime = 0;
+  currentLine = null;
+  currentLineNum = 0;
+  currentLineTimer = null;
+  defaultLanguages = [];
+  loading = true;
 
-  currentVid = ''
-  currentTime = 0
-  currentLine = null
-  currentLineNum = 0 
-  currentLineTimer = null 
-  defaultLanguages = []
-  loading = true
+  Math = Math;
 
-  Math = Math
+  error = null;
 
-  error = null
-
-  currentLineTop = 0
+  currentLineTop = 0;
   settings = {
     darkMode: false,
-    timestamp: false, 
-    fontSize: 14
-  }
+    timestamp: false,
+    fontSize: 14,
+  };
 
-  openedShareBefore = false
+  openedShareBefore = false;
+  playerHeight = 0;
 
-  constructor(private ytb: YtbService, private cd: ChangeDetectorRef) { 
+  constructor(private ytb: YtbService, private cd: ChangeDetectorRef) {
     if (localStorage.getItem('captionz-settings'))
-      this.settings = JSON.parse(localStorage.getItem('captionz-settings'))
+      this.settings = JSON.parse(localStorage.getItem('captionz-settings'));
   }
 
   reset() {
     this.captionTracks = [];
-    this.captionLines = []; 
+    this.captionLines = [];
     this.captionLines2 = [];
     this.originalCaptionLines2 = [];
     this.selectedTracks = [];
@@ -85,46 +86,44 @@ export class CaptionManComponent implements OnInit {
 
   ngOnInit(): void {
     this.usernameCtrl.valueChanges
-      .pipe(debounceTime(200),
-        distinctUntilChanged())
+      .pipe(debounceTime(200), distinctUntilChanged())
       .subscribe((username: string) => {
         this.invalidUsername = false;
-        this.username = username;        
+        this.username = username;
       });
 
     this.commentCtrl.valueChanges
-      .pipe(debounceTime(200),
-        distinctUntilChanged())
+      .pipe(debounceTime(200), distinctUntilChanged())
       .subscribe((comment: string) => {
-        this.currentComment = comment;        
+        this.currentComment = comment;
       });
-    
+
     this.socket = io.connect(`${location.hostname}:3000/`);
     this.socket.on('connect', () => {
-      if (this.currentVid){
-       this.socket.emit('joinRoom', this.currentVid);
+      if (this.currentVid) {
+        this.socket.emit('joinRoom', this.currentVid);
       }
-    })
+    });
     this.socket.on('comment', (comment) => {
       console.log('received msg: ', comment?.text);
       if (comment?.videoId === this.currentVid) {
         this.insertComment(comment);
       }
-    })
-    this.socket.on('registerred', username => {
+    });
+    this.socket.on('registerred', (username) => {
       this.username = username;
       localStorage.username = username;
-      this.registerred = true 
-    })
+      this.registerred = true;
+    });
 
-    this.socket.on('comments', comments => {
+    this.socket.on('comments', (comments) => {
       this.comments = comments;
       this.loading = false;
-    })
+    });
 
-    this.socket.on('error', err => {
+    this.socket.on('error', (err) => {
       this.error = err;
-    })
+    });
     this.initYtb();
   }
 
@@ -142,24 +141,26 @@ export class CaptionManComponent implements OnInit {
 
     const comment = {
       start: this.ytb.getCurrentTime() || 0,
-      text: this.currentComment, 
+      text: this.currentComment,
       username: this.username,
-      videoId: this.currentVid
-    }
+      videoId: this.currentVid,
+    };
 
     this.socket.emit('message', comment);
 
     this.insertComment(comment);
-    this.currentComment = ""
+    this.currentComment = '';
     this.commentCtrl.setValue('');
   }
   insertComment(comment) {
-    const insertIdx = this.comments.findIndex(line => line.start > comment.start);
-        if (insertIdx > -1) {
-          this.comments.splice(insertIdx, 0, comment);
-        } else {
-          this.comments.push(comment);
-        }
+    const insertIdx = this.comments.findIndex(
+      (line) => line.start > comment.start
+    );
+    if (insertIdx > -1) {
+      this.comments.splice(insertIdx, 0, comment);
+    } else {
+      this.comments.push(comment);
+    }
   }
 
   isSmallScreen() {
@@ -174,24 +175,24 @@ export class CaptionManComponent implements OnInit {
     let j: number = 0;
 
     const pushSameLines = (l: any, i: number) => {
-      let l_next = this.captionLines[i+1];
+      let l_next = this.captionLines[i + 1];
       let l2 = newCaptions[j];
       if (!l2) return;
 
-      if (!this.captionLines2[i]) this.captionLines2[i] = { texts: [] } 
+      if (!this.captionLines2[i]) this.captionLines2[i] = { texts: [] };
 
       if (l2.start <= l.start) {
         this.captionLines2[i].texts.push(l2.text);
         j += 1;
         pushSameLines(l, i);
-      } else if (l2.start < (l.start + l.dur)) {
-        if (!l_next || (l2.start + l2.dur) < (l_next.start + l_next.dur/2)) {
+      } else if (l2.start < l.start + l.dur) {
+        if (!l_next || l2.start + l2.dur < l_next.start + l_next.dur / 2) {
           this.captionLines2[i].texts.push(l2.text);
           j += 1;
           pushSameLines(l, i);
         }
       } else {
-        if (l_next && (l2.start + l2.dur) < l_next.start) {
+        if (l_next && l2.start + l2.dur < l_next.start) {
           this.captionLines2[i].texts.push(l2.text);
           j += 1;
           pushSameLines(l, i);
@@ -207,42 +208,52 @@ export class CaptionManComponent implements OnInit {
     }
   }
 
-  async changeCaption(event, track, vid = null) {    
-    const idx = this.selectedTracks.findIndex(t => t.name === track.name)
+  async changeCaption(event, track, vid = null) {
+    const idx = this.selectedTracks.findIndex((t) => t.name === track.name);
     if (idx >= 0) {
       this.selectedTracks.splice(idx, 1);
       if (idx === 0) {
         this.captionLines = this.originalCaptionLines2;
       }
       this.genCaption2([]);
-      
     } else {
       this.loading = true;
 
-      const captions = await this.ytb.getCaptionLines(this.currentVid, track.languageCode, track.nameProp);
+      const captions = await this.ytb.getCaptionLines(
+        this.currentVid,
+        track.languageCode,
+        track.nameProp
+      );
       if (vid && vid !== this.currentVid) return;
 
-      if (event && event.target.nodeName !== 'INPUT' && this.selectedTracks.length) { // replace the track
+      if (
+        event &&
+        event.target.nodeName !== 'INPUT' &&
+        this.selectedTracks.length
+      ) {
+        // replace the track
         this.selectedTracks[this.selectedTracks.length - 1] = track;
       } else {
         this.selectedTracks.push(track);
       }
 
-      if (this.selectedTracks.length === 3)  {
+      if (this.selectedTracks.length === 3) {
         this.selectedTracks.splice(0, 1);
         this.captionLines = this.originalCaptionLines2;
         this.genCaption2(captions);
-
       } else if (this.selectedTracks.length === 2) {
         this.genCaption2(captions);
       } else {
         this.captionLines = captions;
       }
     }
-    
-    this.defaultLanguages = this.selectedTracks.map(t => t.name);
-    this.trackName = this.selectedTracks.map(t => t.name).join(', ');
-    localStorage.setItem('last-language-names', JSON.stringify(this.defaultLanguages));
+
+    this.defaultLanguages = this.selectedTracks.map((t) => t.name);
+    this.trackName = this.selectedTracks.map((t) => t.name).join(', ');
+    localStorage.setItem(
+      'last-language-names',
+      JSON.stringify(this.defaultLanguages)
+    );
     this.loading = false;
   }
 
@@ -268,14 +279,14 @@ export class CaptionManComponent implements OnInit {
     await this.ytb.init();
 
     const setCaptionsHeight = () => {
-      const h = $("#ytb-player").height() - 100;
-      $("ul.caption-ul").css('height', `${h}px`);
-      if (!this.isSmallScreen())
-        this.currentLineTop = h * 2/5;
-    }
+      this.playerHeight = $('#ytb-player').height();
+      const h = $('#ytb-player').height() - 100;
+      $('ul.caption-ul').css('height', `${h}px`);
+      if (!this.isSmallScreen()) this.currentLineTop = (h * 2) / 5;
+    };
 
     setCaptionsHeight();
-    new ResizeObserver(setCaptionsHeight).observe($("#ytb-player")[0]);
+    new ResizeObserver(setCaptionsHeight).observe($('#ytb-player')[0]);
     this.changeFontSize(this.settings.fontSize);
 
     this.ytb.onPlaying = (t: number) => {
@@ -283,14 +294,23 @@ export class CaptionManComponent implements OnInit {
         console.log('on playing: ', t);
         this.scrollToTime(t);
 
-        this.ytb.bullets = this.comments.filter(line => {
-          if (line.start < t) {
-            const diff = (t - line.start);
-            if (diff < lineDuration) {
-              return line;
+        this.comments.forEach((line) => {
+          const diff = t - line.start;
+          if (line.start < t && diff < lineDuration) {
+            if (!line.yPos) {
+              line.yPos = lineYposTracker + 1;
+              const topPercent =
+                ((line.yPos - 1) % 10) * 10 + Math.floor((line.yPos - 1) / 10);
+              line.top = (this.playerHeight - 50) * topPercent * 0.01 + 'px';
+              this.ytb.bullets.push(line);
+              lineYposTracker += 1;
             }
+          } else if (line.yPos) {
+            const delIdx = this.ytb.bullets.findIndex((b) => b === line);
+            delete line.yPos;
+            this.ytb.bullets.splice(delIdx, 1);
           }
-        })
+        });
       }
     };
     this.ytb.onPaused = () => {
@@ -310,24 +330,24 @@ export class CaptionManComponent implements OnInit {
     this.comments = [
       {
         username: 'River',
-        text: "Hello world!",
-        start: 1
+        text: 'Hello world!',
+        start: 1,
       },
       {
         username: 'Lybron',
-        text: "Welcome to Cats Love Youtube!",
-        start: 5.45
+        text: 'Welcome to Cats Love Youtube!',
+        start: 5.45,
       },
       {
         username: 'Stranger',
-        text: "Tack Tack!!",
-        start: 10.45
-      }
-    ]
+        text: 'Tack Tack!!',
+        start: 10.45,
+      },
+    ];
     this.loading = false;
   }
 
-  setLineTimer () {
+  setLineTimer() {
     clearTimeout(this.currentLineTimer);
 
     const repeatLastLine = this.currentLineNum === this.repeatB;
@@ -346,7 +366,8 @@ export class CaptionManComponent implements OnInit {
     }
 
     this.currentLineTimer = setTimeout(() => {
-      if (this.currentLineNum === this.repeatB) { // in repeat
+      if (this.currentLineNum === this.repeatB) {
+        // in repeat
         this.seekToLine(this.repeatA);
       } else {
         this.scrollToTime(this.ytb.getCurrentTime());
@@ -355,7 +376,9 @@ export class CaptionManComponent implements OnInit {
   }
   scrollToLine(idx) {
     if (this.currentLineNum >= 0) {
-      $(`ul.caption-ul .list-group-item[data-index="${this.currentLineNum}"]`).removeClass('active');
+      $(
+        `ul.caption-ul .list-group-item[data-index="${this.currentLineNum}"]`
+      ).removeClass('active');
     }
 
     this.currentLine = this.comments[idx];
@@ -365,12 +388,14 @@ export class CaptionManComponent implements OnInit {
       // console.log(this.currentLine.text);
       if (this.ytb.playing) this.setLineTimer();
 
-      if (this.repeatB >=0 && !this.isLineInRepeat(this.currentLineNum)) {
+      if (this.repeatB >= 0 && !this.isLineInRepeat(this.currentLineNum)) {
         this.clearRepeat();
         this.cd.detectChanges(); // somehow, the changed didn't auto detected.
       }
 
-      const $el = $(`ul.caption-ul .list-group-item[data-index="${this.currentLineNum}"]`);
+      const $el = $(
+        `ul.caption-ul .list-group-item[data-index="${this.currentLineNum}"]`
+      );
       $el.addClass('active');
       const el = $el[0];
       if (el) {
@@ -379,12 +404,15 @@ export class CaptionManComponent implements OnInit {
     }
   }
   scrollToTime(time: number) {
-
     const isLineInTime = (currentTime, line, nextL) => {
       // within 3 seconds
-      if (currentTime >= line.start && currentTime < (line.start + 3)) {
+      if (currentTime >= line.start && currentTime < line.start + 3) {
         return true;
-      } else if (nextL && currentTime >= line.start && currentTime < nextL.start) {
+      } else if (
+        nextL &&
+        currentTime >= line.start &&
+        currentTime < nextL.start
+      ) {
         return true;
       } else if (!nextL) {
         return true;
@@ -395,7 +423,13 @@ export class CaptionManComponent implements OnInit {
     const findCurrentLineIndex = (currentTime, lastIdx = null) => {
       let start = lastIdx || 0;
       for (let i = 0; i < this.comments.length; i++) {
-        if (isLineInTime(currentTime, this.comments[start], this.comments[start + 1]))
+        if (
+          isLineInTime(
+            currentTime,
+            this.comments[start],
+            this.comments[start + 1]
+          )
+        )
           return start;
 
         start += 1;
@@ -422,7 +456,12 @@ export class CaptionManComponent implements OnInit {
     this.repeatB = NaN;
   }
   isLineInRepeat(i) {
-    return this.repeatA >= 0 && this.repeatB >= 0 && (i >= this.repeatA && i  <= this.repeatB) 
+    return (
+      this.repeatA >= 0 &&
+      this.repeatB >= 0 &&
+      i >= this.repeatA &&
+      i <= this.repeatB
+    );
   }
   getRepeatLetter(i) {
     if (i === this.repeatB && this.repeatA !== this.repeatB) return 'B';
@@ -438,15 +477,19 @@ export class CaptionManComponent implements OnInit {
         if (this.repeatB < this.repeatA) {
           this.repeatB = this.repeatA;
           this.repeatA = i;
-        } 
+        }
 
-        if (this.currentLineNum > this.repeatB || this.currentLineNum < this.repeatA) {
+        if (
+          this.currentLineNum > this.repeatB ||
+          this.currentLineNum < this.repeatA
+        ) {
           this.seekToLine(this.repeatA);
         }
       } else {
         this.repeatA = i;
       }
-    } else {  // repeat a line
+    } else {
+      // repeat a line
       if (i === this.repeatA) {
         this.clearRepeat();
       } else {

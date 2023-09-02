@@ -6,24 +6,25 @@ declare var YT: any;
 declare var $: any;
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class YtbService {
-  player = null
-  playing = false
-  onPlaying = null
-  onPaused = null
+  player = null;
+  playing = false;
+  onPlaying = null;
+  onPaused = null;
+  onPlayingTimer = null;
 
-  playLink = ''
+  playLink = '';
 
   bullets = [];
-
 
   private _videoId: BehaviorSubject<string> = new BehaviorSubject('');
   public readonly videoId: Observable<string> = this._videoId.asObservable();
 
   private _playlistId: BehaviorSubject<string> = new BehaviorSubject('');
-  public readonly playlistId: Observable<string> = this._playlistId.asObservable();
+  public readonly playlistId: Observable<string> =
+    this._playlistId.asObservable();
 
   constructor(private zone: NgZone) {}
 
@@ -39,10 +40,10 @@ export class YtbService {
           },
           videoId: this._videoId.getValue(),
           events: {
-            'onReady': () => {
+            onReady: () => {
               console.log('ready.....');
 
-              // for debugging 
+              // for debugging
               (window as any).player = this.player;
 
               // const lastVid = localStorage.getItem('last-video-id') || 'J_z-W4UVHkw';
@@ -56,14 +57,17 @@ export class YtbService {
 
               resolve();
             },
-            'onStateChange': (ev) => {
+            onStateChange: (ev) => {
               console.log('State Change: ', ev.data);
 
               if (ev.data === -1 && this._playlistId.getValue()) {
                 // When the player first loads a video, it will broadcast an unstarted (-1) event.
                 const url = this.player.getVideoUrl();
                 const parsed = this.parseUrl(url);
-                if (parsed.videoId && parsed.videoId !== this._videoId.getValue()) {
+                if (
+                  parsed.videoId &&
+                  parsed.videoId !== this._videoId.getValue()
+                ) {
                   console.log('playlist load video: ', parsed.videoId);
                   this.zone.run(() => {
                     this._videoId.next(parsed.videoId);
@@ -75,10 +79,18 @@ export class YtbService {
                 }
               }
 
-              if (ev.data === 1) { // playing 
+              if (ev.data === 1) {
+                // playing
                 this.playing = true;
                 if (this.onPlaying) {
                   this.onPlaying(this.player.getCurrentTime());
+
+                  clearInterval(this.onPlayingTimer);
+                  this.onPlayingTimer = setInterval(() => {
+                    if (this.onPlaying && this.playing) {
+                      this.onPlaying(this.player.getCurrentTime());
+                    }
+                  }, 1000);
                 }
               } else {
                 if (this.playing) {
@@ -88,22 +100,16 @@ export class YtbService {
                 }
                 this.playing = false;
               }
-            }
-          }
+            },
+          },
         });
-      }
+      };
 
       // 2. This code loads the IFrame Player API code asynchronously.
       const tag = document.createElement('script');
-      tag.src = "https://www.youtube.com/iframe_api";
+      tag.src = 'https://www.youtube.com/iframe_api';
       const firstScriptTag = document.getElementsByTagName('script')[0];
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-      setInterval(() => {
-        if (this.onPlaying && this.playing) {
-          this.onPlaying(this.player.getCurrentTime());
-        }
-      }, 1000);
     });
   }
 
@@ -113,7 +119,7 @@ export class YtbService {
       this._videoId.next(vid);
       localStorage.setItem('last-video-id', vid);
 
-      // clear playlist 
+      // clear playlist
       this._playlistId.next('');
       localStorage.removeItem('last-playlist-id');
       localStorage.removeItem('last-video-index-in-playlist');
@@ -124,8 +130,8 @@ export class YtbService {
       this._playlistId.next(playlistId);
       localStorage.setItem('last-playlist-id', playlistId);
       this.player.loadPlaylist({
-        list: playlistId, 
-        listType: "playlist",
+        list: playlistId,
+        listType: 'playlist',
         index,
       });
     }
@@ -134,7 +140,10 @@ export class YtbService {
     if (playlistId) {
       localStorage.setItem('last-playlist-id', playlistId);
       if (indexInPlaylist) {
-        localStorage.setItem('last-video-index-in-playlist', String(indexInPlaylist));
+        localStorage.setItem(
+          'last-video-index-in-playlist',
+          String(indexInPlaylist)
+        );
       } else {
         localStorage.removeItem('last-video-index-in-playlist');
       }
@@ -150,22 +159,24 @@ export class YtbService {
   }
 
   parseUrl(url: string) {
-    const regex = /(?:https?:\/\/)?(?:youtu\.be\/|(?:www\.|m\.)?youtube\.com\/(?:watch|v|embed)(?:\.php)?(?:\?.*v=|\/))([a-zA-Z0-9\_-]+)/;
-    const playListRegex = /(?:https?:\/\/)?(?:youtu\.be\/|(?:www\.|m\.)?youtube\.com\/(?:playlist)(?:\.php)?(?:\?.*list=|\/))([a-zA-Z0-9\_-]+)/;
+    const regex =
+      /(?:https?:\/\/)?(?:youtu\.be\/|(?:www\.|m\.)?youtube\.com\/(?:watch|v|embed)(?:\.php)?(?:\?.*v=|\/))([a-zA-Z0-9\_-]+)/;
+    const playListRegex =
+      /(?:https?:\/\/)?(?:youtu\.be\/|(?:www\.|m\.)?youtube\.com\/(?:playlist)(?:\.php)?(?:\?.*list=|\/))([a-zA-Z0-9\_-]+)/;
 
     let m = url.match(regex);
     if (m && m[1]) {
       const m2 = url.match(/list=([a-zA-Z0-9\_-]+)/);
-      const playlistId = m2 && m2[1]; 
+      const playlistId = m2 && m2[1];
 
       const m3 = url.match(/index=(\d+)/);
-      const indexInPlaylist: number = m3 ? parseInt(m3[1])-1 : 0; 
+      const indexInPlaylist: number = m3 ? parseInt(m3[1]) - 1 : 0;
       return { videoId: m[1], playlistId, indexInPlaylist };
     } else {
       m = url.match(playListRegex);
       if (m && m[1]) {
         const m3 = url.match(/index=(\d+)/);
-        const indexInPlaylist: number = m3 ? parseInt(m3[1])-1 : 0; 
+        const indexInPlaylist: number = m3 ? parseInt(m3[1]) - 1 : 0;
         return { playlistId: m[1], indexInPlaylist };
       }
     }
@@ -188,42 +199,56 @@ export class YtbService {
     // if (!environment.production && 0) {
     //   captionTracks = environment.fakeData.captionTracks;
     // } else {
-      // res =  await $.get(`${apiPath}/tracks/${this._videoId.getValue()}`);
-      captionTracks = await this.requestTracks(this._videoId.getValue());
+    // res =  await $.get(`${apiPath}/tracks/${this._videoId.getValue()}`);
+    captionTracks = await this.requestTracks(this._videoId.getValue());
     // }
     return captionTracks;
   }
- 
-  async getCaptionLines ( videoId: string, languageCode: string, nameProp: string ) {
-    try {
-        const data = await $.get(`https://www.youtube.com/api/timedtext?lang=${languageCode}&name=${nameProp}&v=${videoId}`);
 
-        return $(data).find('text').toArray().map((item, idx) => {
+  async getCaptionLines(
+    videoId: string,
+    languageCode: string,
+    nameProp: string
+  ) {
+    try {
+      const data = await $.get(
+        `https://www.youtube.com/api/timedtext?lang=${languageCode}&name=${nameProp}&v=${videoId}`
+      );
+
+      return $(data)
+        .find('text')
+        .toArray()
+        .map((item, idx) => {
           const start = Number.parseFloat(item.getAttribute('start'));
           const dur = Number.parseFloat(item.getAttribute('dur'));
           const text = item.innerHTML;
           return { start, dur, text };
         });
     } catch (error) {
-        console.error(error);
+      console.error(error);
     }
   }
 
-  async requestTracks ( videoId: string ) {
-    const data = await $.get(`https://www.youtube.com/api/timedtext?hl=en&type=list&v=${videoId}`);
+  async requestTracks(videoId: string) {
+    const data = await $.get(
+      `https://www.youtube.com/api/timedtext?hl=en&type=list&v=${videoId}`
+    );
     //Such as: <track id="0" name="" lang_code="ar" lang_original="العربية" lang_translated="Arabic"/>
 
-    return $(data).find('track').toArray().map((item, idx) => {
-      let name = item.getAttribute('lang_translated');
-      const nameProp = item.getAttribute('name') || '';
-      if (nameProp) name += ' - ' + nameProp;
+    return $(data)
+      .find('track')
+      .toArray()
+      .map((item, idx) => {
+        let name = item.getAttribute('lang_translated');
+        const nameProp = item.getAttribute('name') || '';
+        if (nameProp) name += ' - ' + nameProp;
 
-      return {
-        name,
-        nameProp,
-        nameLocal: item.getAttribute('lang_original'),
-        languageCode: item.getAttribute('lang_code')
-      }
-    });
+        return {
+          name,
+          nameProp,
+          nameLocal: item.getAttribute('lang_original'),
+          languageCode: item.getAttribute('lang_code'),
+        };
+      });
   }
 }

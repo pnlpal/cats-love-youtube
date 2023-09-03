@@ -93,7 +93,7 @@ export class AppComponent {
 
     if (window.self === window.top && location.hostname !== 'localhost') {
       // not in iframe
-      location.replace('/captionz');
+      location.replace('/cats-love-youtube');
     }
   }
 

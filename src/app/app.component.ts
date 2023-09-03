@@ -11,7 +11,7 @@ declare var $: any;
   styleUrls: ['./app.component.less'],
 })
 export class AppComponent {
-  title = 'captionz';
+  title = 'Cats Love Youtube';
 
   videoUrlCtrl = new FormControl();
   invalidUrl = false;

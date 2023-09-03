@@ -10,6 +10,7 @@ const io = new Server(httpServer, {
   cors: {
     origin: "*",
   },
+  path: "/cats-love-youtube-socket",
 });
 
 const asciiCat = readFileSync(__dirname + "/assets/ascii-cat.txt").toString();

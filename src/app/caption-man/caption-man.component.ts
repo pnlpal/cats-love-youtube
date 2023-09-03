@@ -100,11 +100,11 @@ export class CaptionManComponent implements OnInit {
         this.currentComment = comment;
       });
 
-    this.socket = io.connect(
+    const socketUri =
       location.hostname === 'localhost'
         ? `${location.hostname}:3000/`
-        : `${location.hostname}/cats-love-youtube-socket`
-    );
+        : `${location.hostname}/`;
+    this.socket = io.connect(socketUri, { path: '/cats-love-youtube-socket' });
     this.socket.on('connect', () => {
       if (this.currentVid) {
         this.socket.emit('joinRoom', this.currentVid);

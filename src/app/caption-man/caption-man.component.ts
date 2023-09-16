@@ -255,7 +255,7 @@ export class CaptionManComponent implements OnInit {
           .map((item) => {
             const start = Number.parseFloat(item.getAttribute('start'));
             const dur = Number.parseFloat(item.getAttribute('dur'));
-            const text = item.innerHTML;
+            const text = item.innerHTML.replaceAll('↵', ' ');
             return { start, dur, text };
           });
       });

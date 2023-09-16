@@ -11,9 +11,8 @@ declare var $: any;
 export class YtbService {
   player = null;
   playing = false;
-  onPlaying = null;
+  onStartPlaying = null;
   onPaused = null;
-  onPlayingTimer = null;
 
   playLink = '';
 
@@ -85,15 +84,8 @@ export class YtbService {
               if (ev.data === 1) {
                 // playing
                 this.playing = true;
-                if (this.onPlaying) {
-                  this.onPlaying(this.player.getCurrentTime());
-
-                  clearInterval(this.onPlayingTimer);
-                  this.onPlayingTimer = setInterval(() => {
-                    if (this.onPlaying && this.playing) {
-                      this.onPlaying(this.player.getCurrentTime());
-                    }
-                  }, 1000);
+                if (this.onStartPlaying) {
+                  this.onStartPlaying(this.player.getCurrentTime());
                 }
               } else {
                 if (this.playing) {

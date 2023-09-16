@@ -7,7 +7,7 @@ import * as io from 'socket.io-client';
 declare var $: any;
 declare var ResizeObserver: any;
 
-const lineDuration = 10; // seconds
+const bulletDuration = 10; // seconds
 let lineYposTracker = 0;
 
 @Component({
@@ -254,7 +254,7 @@ export class CaptionManComponent implements OnInit {
           .toArray()
           .map((item) => {
             const start = Number.parseFloat(item.getAttribute('start'));
-            const dur = Number.parseFloat(item.getAttribute('dur'));
+            const dur = Number.parseFloat(item.getAttribute('dur') || 1);
             const text = item.innerHTML.replaceAll('↵', ' ');
             return { start, dur, text };
           });
@@ -345,7 +345,7 @@ export class CaptionManComponent implements OnInit {
   genBullets(t: number) {
     this.lines.forEach((line) => {
       const diff = t - line.start;
-      if (line.start < t && diff < lineDuration) {
+      if (line.start < t && diff < bulletDuration) {
         if (!line.yPos) {
           line.yPos = lineYposTracker + 1;
           const topPercent =
@@ -386,9 +386,9 @@ export class CaptionManComponent implements OnInit {
     new ResizeObserver(setCaptionsHeight).observe($('#ytb-player')[0]);
     this.changeFontSize(this.settings.fontSize);
 
-    this.ytb.onPlaying = (t: number) => {
+    this.ytb.onStartPlaying = (t: number) => {
       if (this.lines.length) {
-        console.log('on playing: ', t);
+        console.log('on start playing: ', t);
         this.scrollToTime(t);
 
         if (this.currentTab === 'COMMENT') {
@@ -413,6 +413,8 @@ export class CaptionManComponent implements OnInit {
     clearTimeout(this.currentLineTimer);
 
     const repeatLastLine = this.currentLineNum === this.repeatB;
+    const lineDuration =
+      this.currentTab === 'CAPTION' ? this.currentLine.dur : 1;
 
     let sec = this.currentLine.start + lineDuration - this.currentTime + 0.1;
     if (sec < 0.1) sec = 0.1;
@@ -467,12 +469,9 @@ export class CaptionManComponent implements OnInit {
   }
   scrollToTime(time: number) {
     const isLineInTime = (line, nextL) => {
-      if (time < line.start) {
+      if (time <= line.start) {
         return true;
-        // within 1 seconds
-      } else if (time >= line.start && time <= line.start + 1) {
-        return true;
-      } else if (nextL && time >= line.start && time < nextL.start) {
+      } else if (nextL && time < nextL.start - 0.5) {
         return true;
       } else if (!nextL) {
         return true;

@@ -325,17 +325,17 @@ export class CaptionManComponent implements OnInit {
       })();
 
       for (const name of this.defaultLanguages) {
-        const track = this.captionTracks.find((x) => (x.languageName = name));
+        const track = this.captionTracks.find((x) => x.languageName === name);
         if (track) {
           await this.changeCaption(null, track);
         }
       }
       if (!this.lines.length) {
         const defaultTrack =
-          this.captionTracks.find((x) => x.languageName === 'English') ||
-          this.captionTracks.find((x) => x.languageName === 'Spanish') ||
-          this.captionTracks.find((x) => x.languageName === 'Japanese') ||
-          this.captionTracks.find((x) => x.languageName === 'Chinese') ||
+          this.captionTracks.find((x) => x.en === 'en') ||
+          this.captionTracks.find((x) => x.en === 'es') ||
+          this.captionTracks.find((x) => x.en === 'ja') ||
+          this.captionTracks.find((x) => x.en === 'zh-CN') ||
           this.captionTracks[0];
         await this.changeCaption(null, defaultTrack);
       }

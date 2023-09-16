@@ -110,6 +110,15 @@
             class="line-text list-group-item-text language-text"
             [innerHTML]="line.text | unescape"
           ></span>
+          <span *ngIf="captionLines2[i]">
+            <span *ngFor="let text of captionLines2[i].texts">
+              <br />
+              <span
+                class="line-text list-group-item-text language-text2"
+                [innerHTML]="text | unescape"
+              ></span>
+            </span>
+          </span>
         </li>
       </ng-container>
     </ul>

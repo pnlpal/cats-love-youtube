@@ -194,20 +194,6 @@ export class YtbService {
     return this.player.seekTo(time, true);
   }
 
-  async getCaptionTracks() {
-    if (!this._videoId.getValue()) return [];
-
-    let captionTracks: any;
-
-    // if (!environment.production && 0) {
-    //   captionTracks = environment.fakeData.captionTracks;
-    // } else {
-    // res =  await $.get(`${apiPath}/tracks/${this._videoId.getValue()}`);
-    captionTracks = await this.requestTracks(this._videoId.getValue());
-    // }
-    return captionTracks;
-  }
-
   async getCaptionLines(
     videoId: string,
     languageCode: string,

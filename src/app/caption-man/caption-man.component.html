@@ -35,6 +35,11 @@
             </a>
           </li>
         </ul>
+
+        <ul class="nav navbar-nav navbar-right">
+          <li role="presentation" class="active"><a href="#">Captions</a></li>
+          <li role="presentation"><a href="#">Comments</a></li>
+        </ul>
       </div>
     </nav>
 
@@ -48,7 +53,7 @@
         <div class="captionz-bounce3"></div>
       </div>
       <div
-        *ngIf="!loading && !comments.length"
+        *ngIf="!loading && !lines.length"
         class="first-comment-tip"
         [class.dark-mode]="settings.darkMode"
       >
@@ -57,9 +62,9 @@
         <p>And be nice.</p>
         <p>Meow!</p>
       </div>
-      <ng-container *ngIf="!loading && comments">
+      <ng-container *ngIf="!loading && lines">
         <li
-          *ngFor="let line of comments; let i = index"
+          *ngFor="let line of lines; let i = index"
           class="list-group-item"
           [class]="{
             'repeat-b': i === repeatB,
@@ -96,6 +101,7 @@
             >{{ line.start | minsec }}</a
           >
           <span
+            *ngIf="line.username"
             class="line-text list-group-item-text username-text"
             [innerHTML]="line.username + ':&nbsp;&nbsp;' | unescape"
           ></span>

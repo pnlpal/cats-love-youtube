@@ -17,11 +17,14 @@ let lineYposTracker = 0;
 })
 export class CaptionManComponent implements OnInit {
   captionTracks = [];
-  captionLines = [];
   captionLines2 = [];
   originalCaptionLines2 = [];
   selectedTracks = [];
   trackName = '';
+
+  lines = [];
+
+  currentTab = localStorage.getItem('last-man-tab') || 'CAPTION';
 
   username = localStorage.username || '';
   usernameCtrl = new FormControl();
@@ -30,9 +33,9 @@ export class CaptionManComponent implements OnInit {
 
   commentCtrl = new FormControl();
   currentComment = '';
-  comments = [];
 
   socket = null;
+  asyncSend = null;
 
   repeatA: number;
   repeatB: number;
@@ -53,7 +56,7 @@ export class CaptionManComponent implements OnInit {
   settings = {
     darkMode: false,
     timestamp: false,
-    fontSize: 14,
+    fontSize: 16,
   };
 
   openedShareBefore = false;
@@ -67,8 +70,9 @@ export class CaptionManComponent implements OnInit {
   }
 
   reset() {
+    this.lines = [];
+
     this.captionTracks = [];
-    this.captionLines = [];
     this.captionLines2 = [];
     this.originalCaptionLines2 = [];
     this.selectedTracks = [];
@@ -105,14 +109,19 @@ export class CaptionManComponent implements OnInit {
         ? `${location.hostname}:3000/`
         : `${location.hostname}/`;
     this.socket = io.connect(socketUri, { path: '/cats-love-youtube-socket' });
+    (window as any).socket = this.socket;
     this.socket.on('connect', () => {
       if (this.currentVid) {
-        this.socket.emit('joinRoom', this.currentVid);
+        this.socket.emit('joinRoom', {
+          videoId: this.currentVid,
+          manTab: this.currentTab,
+        });
+        this.getData();
       }
     });
     this.socket.on('welcome', ({ asciiCat }) => (this.asciiCat = asciiCat));
     this.socket.on('comment', (comment) => {
-      console.log('received msg: ', comment?.text);
+      console.log('received comment: ', comment?.text);
       if (comment?.videoId === this.currentVid) {
         this.insertComment(comment);
       }
@@ -123,14 +132,15 @@ export class CaptionManComponent implements OnInit {
       this.registerred = true;
     });
 
-    this.socket.on('comments', (comments) => {
-      this.comments = comments;
-      this.loading = false;
-    });
-
     this.socket.on('error', (err) => {
       this.error = err;
     });
+
+    this.asyncSend = (message, data) =>
+      new Promise((resolve) => {
+        this.socket.emit(message, data, resolve);
+      });
+
     this.initYtb();
   }
 
@@ -162,13 +172,13 @@ export class CaptionManComponent implements OnInit {
     this.commentCtrl.setValue('');
   }
   insertComment(comment) {
-    const insertIdx = this.comments.findIndex(
+    const insertIdx = this.lines.findIndex(
       (line) => line.start > comment.start
     );
     if (insertIdx > -1) {
-      this.comments.splice(insertIdx, 0, comment);
+      this.lines.splice(insertIdx, 0, comment);
     } else {
-      this.comments.push(comment);
+      this.lines.push(comment);
     }
   }
 
@@ -184,7 +194,7 @@ export class CaptionManComponent implements OnInit {
     let j: number = 0;
 
     const pushSameLines = (l: any, i: number) => {
-      let l_next = this.captionLines[i + 1];
+      let l_next = this.lines[i + 1];
       let l2 = newCaptions[j];
       if (!l2) return;
 
@@ -208,7 +218,7 @@ export class CaptionManComponent implements OnInit {
         }
       }
     };
-    this.captionLines.forEach((l, i) => {
+    this.lines.forEach((l, i) => {
       pushSameLines(l, i);
     });
 
@@ -217,23 +227,40 @@ export class CaptionManComponent implements OnInit {
     }
   }
 
-  async changeCaption(event, track, vid = null) {
-    const idx = this.selectedTracks.findIndex((t) => t.name === track.name);
+  async changeCaption(event, track) {
+    if (!track?.languageCode) {
+      return;
+    }
+
+    const idx = this.selectedTracks.findIndex(
+      (t) => t.languageCode === track.languageCode
+    );
     if (idx >= 0) {
       this.selectedTracks.splice(idx, 1);
       if (idx === 0) {
-        this.captionLines = this.originalCaptionLines2;
+        this.lines = this.originalCaptionLines2;
       }
       this.genCaption2([]);
     } else {
       this.loading = true;
+      const videoId = this.currentVid;
 
-      const captions = await this.ytb.getCaptionLines(
-        this.currentVid,
-        track.languageCode,
-        track.nameProp
-      );
-      if (vid && vid !== this.currentVid) return;
+      const captions = await this.asyncSend('getCaption', {
+        videoId,
+        languageCode: track.languageCode,
+      }).then(({ xml }) => {
+        return $(xml)
+          .find('text')
+          .toArray()
+          .map((item) => {
+            const start = Number.parseFloat(item.getAttribute('start'));
+            const dur = Number.parseFloat(item.getAttribute('dur'));
+            const text = item.innerHTML;
+            return { start, dur, text };
+          });
+      });
+
+      if (videoId !== this.currentVid) return;
 
       if (
         event &&
@@ -248,21 +275,24 @@ export class CaptionManComponent implements OnInit {
 
       if (this.selectedTracks.length === 3) {
         this.selectedTracks.splice(0, 1);
-        this.captionLines = this.originalCaptionLines2;
+        this.lines = this.originalCaptionLines2;
         this.genCaption2(captions);
       } else if (this.selectedTracks.length === 2) {
         this.genCaption2(captions);
       } else {
-        this.captionLines = captions;
+        this.lines = captions;
       }
     }
 
-    this.defaultLanguages = this.selectedTracks.map((t) => t.name);
-    this.trackName = this.selectedTracks.map((t) => t.name).join(', ');
-    localStorage.setItem(
-      'last-language-names',
-      JSON.stringify(this.defaultLanguages)
-    );
+    if (event) {
+      this.defaultLanguages = this.selectedTracks.map((t) => t.languageName);
+      localStorage.setItem(
+        'last-language-names',
+        JSON.stringify(this.defaultLanguages)
+      );
+    }
+
+    this.trackName = this.selectedTracks.map((t) => t.languageName).join(', ');
     this.loading = false;
   }
 
@@ -275,6 +305,43 @@ export class CaptionManComponent implements OnInit {
     }
   }
 
+  async getData() {
+    if (this.currentTab === 'COMMENT' && !this.lines.length) {
+      this.lines = await this.asyncSend('getComments', {
+        videoId: this.currentVid,
+      });
+      this.loading = false;
+    } else if (this.currentTab === 'CAPTION' && !this.captionTracks.length) {
+      this.captionTracks = await this.asyncSend('getCaptionTracks', {
+        videoId: this.currentVid,
+      });
+
+      this.defaultLanguages = (() => {
+        try {
+          return JSON.parse(localStorage.getItem('last-language-names') || '');
+        } catch (error) {
+          return ['English'];
+        }
+      })();
+
+      for (const name of this.defaultLanguages) {
+        const track = this.captionTracks.find((x) => (x.languageName = name));
+        if (track) {
+          await this.changeCaption(null, track);
+        }
+      }
+      if (!this.lines.length) {
+        const defaultTrack =
+          this.captionTracks.find((x) => x.languageName === 'English') ||
+          this.captionTracks.find((x) => x.languageName === 'Spanish') ||
+          this.captionTracks.find((x) => x.languageName === 'Japanese') ||
+          this.captionTracks.find((x) => x.languageName === 'Chinese') ||
+          this.captionTracks[0];
+        await this.changeCaption(null, defaultTrack);
+      }
+    }
+  }
+
   async initYtb() {
     this.ytb.videoId.subscribe(async (vid) => {
       console.log('video id: ', vid);
@@ -282,7 +349,8 @@ export class CaptionManComponent implements OnInit {
       this.currentVid = vid;
       this.reset();
 
-      this.socket.emit('joinRoom', vid);
+      this.socket.emit('joinRoom', { videoId: vid, manTab: this.currentTab });
+      this.getData();
     });
 
     await this.ytb.init();
@@ -299,11 +367,11 @@ export class CaptionManComponent implements OnInit {
     this.changeFontSize(this.settings.fontSize);
 
     this.ytb.onPlaying = (t: number) => {
-      if (this.comments.length) {
+      if (this.lines.length) {
         console.log('on playing: ', t);
         this.scrollToTime(t);
 
-        this.comments.forEach((line) => {
+        this.lines.forEach((line) => {
           const diff = t - line.start;
           if (line.start < t && diff < lineDuration) {
             if (!line.yPos) {
@@ -335,27 +403,6 @@ export class CaptionManComponent implements OnInit {
     };
   }
 
-  async getComments() {
-    this.comments = [
-      {
-        username: 'River',
-        text: 'Hello world!',
-        start: 1,
-      },
-      {
-        username: 'Lybron',
-        text: 'Welcome to Cats Love Youtube!',
-        start: 5.45,
-      },
-      {
-        username: 'Stranger',
-        text: 'Tack Tack!!',
-        start: 10.45,
-      },
-    ];
-    this.loading = false;
-  }
-
   setLineTimer() {
     clearTimeout(this.currentLineTimer);
 
@@ -364,7 +411,7 @@ export class CaptionManComponent implements OnInit {
     let sec = this.currentLine.start + lineDuration - this.currentTime + 0.1;
     if (sec < 0.1) sec = 0.1;
 
-    let nextLine = this.comments[this.currentLineNum + 1];
+    let nextLine = this.lines[this.currentLineNum + 1];
     if (nextLine && !repeatLastLine) {
       sec += (nextLine.start - (this.currentLine.start + lineDuration)) / 2;
       // console.log(`current: ${this.currentTime}, start: ${this.currentLine.start}, dur: ${this.currentLine.dur}, wait: ${sec}`);
@@ -390,7 +437,7 @@ export class CaptionManComponent implements OnInit {
       ).removeClass('active');
     }
 
-    this.currentLine = this.comments[idx];
+    this.currentLine = this.lines[idx];
     this.currentLineNum = idx;
 
     if (this.currentLine) {
@@ -428,14 +475,14 @@ export class CaptionManComponent implements OnInit {
     };
 
     this.currentTime = time;
-    const idx = this.comments.findIndex((l, i) =>
-      isLineInTime(l, this.comments[i + 1])
+    const idx = this.lines.findIndex((l, i) =>
+      isLineInTime(l, this.lines[i + 1])
     );
     if (idx > -1) this.scrollToLine(idx);
   }
 
   seekToLine(i) {
-    const line = this.comments[i];
+    const line = this.lines[i];
     this.ytb.seekTo(line.start);
 
     this.currentTime = line.start;

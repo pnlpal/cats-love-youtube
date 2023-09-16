@@ -37,8 +37,27 @@
         </ul>
 
         <ul class="nav navbar-nav navbar-right">
-          <li role="presentation" class="active"><a href="#">Captions</a></li>
-          <li role="presentation"><a href="#">Comments</a></li>
+          <li
+            role="presentation"
+            [class.active]="currentTab === 'CAPTION'"
+            [class.disabled]="noCaptions"
+            [title]="
+              noCaptions
+                ? 'No captions available for this video yet.'
+                : 'Switch to captions'
+            "
+            (click)="changeTab('CAPTION')"
+          >
+            <a href="#">Captions</a>
+          </li>
+          <li
+            role="presentation"
+            [class.active]="currentTab === 'COMMENT'"
+            title="Switch to comments"
+            (click)="changeTab('COMMENT')"
+          >
+            <a href="#">Comments</a>
+          </li>
         </ul>
       </div>
     </nav>
@@ -110,7 +129,7 @@
             class="line-text list-group-item-text language-text"
             [innerHTML]="line.text | unescape"
           ></span>
-          <span *ngIf="captionLines2[i]">
+          <span *ngIf="currentTab === 'CAPTION' && captionLines2[i]">
             <span *ngFor="let text of captionLines2[i].texts">
               <br />
               <span
@@ -145,10 +164,10 @@
               aria-expanded="false"
             >
               <span class="hidden-sm hidden-xs">{{
-                trackName || "Captions"
+                trackName || "Languages"
               }}</span>
               <span class="visible-sm-inline visible-xs-inline"
-                >Captions({{ selectedTracks.length }}/{{
+                >Languages({{ selectedTracks.length }}/{{
                   captionTracks.length
                 }})</span
               >

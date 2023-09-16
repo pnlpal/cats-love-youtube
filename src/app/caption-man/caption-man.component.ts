@@ -24,6 +24,7 @@ export class CaptionManComponent implements OnInit {
 
   lines = [];
 
+  noCaptions = false;
   currentTab = localStorage.getItem('last-man-tab') || 'CAPTION';
 
   username = localStorage.username || '';
@@ -46,7 +47,7 @@ export class CaptionManComponent implements OnInit {
   currentLineNum = 0;
   currentLineTimer = null;
   defaultLanguages = [];
-  loading = true;
+  loading = false;
 
   Math = Math;
 
@@ -71,7 +72,6 @@ export class CaptionManComponent implements OnInit {
 
   reset() {
     this.lines = [];
-
     this.captionTracks = [];
     this.captionLines2 = [];
     this.originalCaptionLines2 = [];
@@ -86,8 +86,11 @@ export class CaptionManComponent implements OnInit {
 
     this.currentLine = null;
     this.currentLineNum = 0;
-    this.loading = true;
+    this.loading = false;
     this.error = null;
+
+    this.noCaptions = false;
+    this.currentTab = localStorage.getItem('last-man-tab') || 'CAPTION';
   }
 
   ngOnInit(): void {
@@ -142,6 +145,18 @@ export class CaptionManComponent implements OnInit {
       });
 
     this.initYtb();
+  }
+
+  async changeTab(name) {
+    if (this.noCaptions || name === this.currentTab) return;
+
+    this.reset();
+    this.currentTab = name;
+    localStorage.setItem('last-man-tab', name);
+    await this.getData();
+
+    // waiting for angular render the lines.
+    setTimeout(() => this.scrollToTime(this.ytb.getCurrentTime()));
   }
 
   register() {
@@ -306,16 +321,28 @@ export class CaptionManComponent implements OnInit {
   }
 
   async getData() {
+    if (this.loading) return;
+
     if (this.currentTab === 'COMMENT' && !this.lines.length) {
+      this.loading = true;
       this.lines = await this.asyncSend('getComments', {
         videoId: this.currentVid,
       });
       this.loading = false;
     } else if (this.currentTab === 'CAPTION' && !this.captionTracks.length) {
+      this.loading = true;
       this.captionTracks = await this.asyncSend('getCaptionTracks', {
         videoId: this.currentVid,
       });
+      this.loading = false;
+      if (!this.captionTracks.length) {
+        this.currentTab = 'COMMENT';
+        this.noCaptions = true;
+        return this.getData();
+      }
+    }
 
+    if (this.currentTab === 'CAPTION' && !this.lines.length) {
       this.defaultLanguages = (() => {
         try {
           return JSON.parse(localStorage.getItem('last-language-names') || '');
@@ -330,6 +357,7 @@ export class CaptionManComponent implements OnInit {
           await this.changeCaption(null, track);
         }
       }
+
       if (!this.lines.length) {
         const defaultTrack =
           this.captionTracks.find((x) => x.en === 'en') ||
@@ -447,6 +475,8 @@ export class CaptionManComponent implements OnInit {
 
     this.currentLine = this.lines[idx];
     this.currentLineNum = idx;
+
+    // console.log('scroll to line: ', idx);
 
     if (this.currentLine) {
       // console.log(this.currentLine.text);

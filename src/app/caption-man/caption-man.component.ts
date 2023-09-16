@@ -342,6 +342,26 @@ export class CaptionManComponent implements OnInit {
     }
   }
 
+  genBullets(t: number) {
+    this.lines.forEach((line) => {
+      const diff = t - line.start;
+      if (line.start < t && diff < lineDuration) {
+        if (!line.yPos) {
+          line.yPos = lineYposTracker + 1;
+          const topPercent =
+            ((line.yPos - 1) % 10) * 10 + Math.floor((line.yPos - 1) / 10);
+          line.top = (this.playerHeight - 50) * topPercent * 0.01 + 'px';
+          this.ytb.bullets.push(line);
+          lineYposTracker += 1;
+        }
+      } else if (line.yPos) {
+        const delIdx = this.ytb.bullets.findIndex((b) => b === line);
+        delete line.yPos;
+        this.ytb.bullets.splice(delIdx, 1);
+      }
+    });
+  }
+
   async initYtb() {
     this.ytb.videoId.subscribe(async (vid) => {
       console.log('video id: ', vid);
@@ -371,23 +391,9 @@ export class CaptionManComponent implements OnInit {
         console.log('on playing: ', t);
         this.scrollToTime(t);
 
-        this.lines.forEach((line) => {
-          const diff = t - line.start;
-          if (line.start < t && diff < lineDuration) {
-            if (!line.yPos) {
-              line.yPos = lineYposTracker + 1;
-              const topPercent =
-                ((line.yPos - 1) % 10) * 10 + Math.floor((line.yPos - 1) / 10);
-              line.top = (this.playerHeight - 50) * topPercent * 0.01 + 'px';
-              this.ytb.bullets.push(line);
-              lineYposTracker += 1;
-            }
-          } else if (line.yPos) {
-            const delIdx = this.ytb.bullets.findIndex((b) => b === line);
-            delete line.yPos;
-            this.ytb.bullets.splice(delIdx, 1);
-          }
-        });
+        if (this.currentTab === 'COMMENT') {
+          this.genBullets(t);
+        }
       }
     };
     this.ytb.onPaused = () => {

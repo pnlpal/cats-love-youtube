@@ -211,6 +211,10 @@
       .container-fluid {
         display: flex;
 
+        &.caption-tracks-container {
+          flex-direction: row-reverse;
+        }
+
         .navbar-brand {
           width: max-content;
           max-width: 180px;
@@ -240,6 +244,13 @@
 
       &.dark-mode {
         background-color: #212121;
+
+        .caption-tracks-container {
+          ul,
+          a {
+            background-color: #212121;
+          }
+        }
 
         input {
           border: none;

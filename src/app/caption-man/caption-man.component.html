@@ -118,7 +118,54 @@
       class="navbar navbar-default navbar-fixed-bottom bottom-form-area"
       [class.dark-mode]="settings.darkMode"
     >
-      <div class="container-fluid">
+      <div
+        class="container-fluid caption-tracks-container"
+        *ngIf="currentTab === 'CAPTION'"
+      >
+        <ul
+          class="nav navbar-nav navbar-right"
+          [class.dropup]="isSmallScreen()"
+        >
+          <li class="dropdown">
+            <a
+              href="#"
+              class="dropdown-toggle"
+              data-toggle="dropdown"
+              role="button"
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
+              <span class="hidden-sm hidden-xs">{{
+                trackName || "Captions"
+              }}</span>
+              <span class="visible-sm-inline visible-xs-inline"
+                >Captions({{ selectedTracks.length }}/{{
+                  captionTracks.length
+                }})</span
+              >
+              <span class="caret"></span>
+            </a>
+            <ul class="dropdown-menu">
+              <li *ngFor="let track of captionTracks">
+                <a
+                  href="javascript:void(0);"
+                  (click)="changeCaption($event, track)"
+                  title="{{ track.languageName }}"
+                >
+                  <input
+                    type="checkbox"
+                    aria-label="..."
+                    [checked]="defaultLanguages.includes(track.languageName)"
+                  />
+                  {{ track.languageName }}
+                </a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <div class="container-fluid" *ngIf="currentTab === 'COMMENT'">
         <div class="navbar-header">
           <span class="navbar-brand">{{
             registerred ? username + ": " : "Who are you?"

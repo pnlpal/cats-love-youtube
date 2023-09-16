@@ -91,6 +91,8 @@ export class CaptionManComponent implements OnInit {
 
     this.noCaptions = false;
     this.currentTab = localStorage.getItem('last-man-tab') || 'CAPTION';
+
+    this.ytb.bullets = [];
   }
 
   ngOnInit(): void {
@@ -373,7 +375,7 @@ export class CaptionManComponent implements OnInit {
   genBullets(t: number) {
     this.lines.forEach((line) => {
       const diff = t - line.start;
-      if (line.start < t && diff < bulletDuration) {
+      if (line.start <= t && diff < bulletDuration) {
         if (!line.yPos) {
           line.yPos = lineYposTracker + 1;
           const topPercent =
@@ -418,10 +420,6 @@ export class CaptionManComponent implements OnInit {
       if (this.lines.length) {
         console.log('on start playing: ', t);
         this.scrollToTime(t);
-
-        if (this.currentTab === 'COMMENT') {
-          this.genBullets(t);
-        }
       }
     };
     this.ytb.onPaused = () => {
@@ -494,6 +492,10 @@ export class CaptionManComponent implements OnInit {
       const el = $el[0];
       if (el) {
         $('ul.caption-ul').scrollTop(el.offsetTop - this.currentLineTop);
+      }
+
+      if (this.currentTab === 'COMMENT') {
+        this.genBullets(this.currentLine.start);
       }
     }
   }

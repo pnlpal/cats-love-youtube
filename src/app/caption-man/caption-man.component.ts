@@ -489,14 +489,21 @@ export class CaptionManComponent implements OnInit {
     let sec = this.currentLine.start + lineDuration - this.currentTime + 0.1;
     if (sec < 0.1) sec = 0.1;
 
-    let nextLine = this.lines[this.currentLineNum + 1];
-    if (nextLine && !repeatLastLine) {
-      sec += (nextLine.start - (this.currentLine.start + lineDuration)) / 2;
-      // console.log(`current: ${this.currentTime}, start: ${this.currentLine.start}, dur: ${this.currentLine.dur}, wait: ${sec}`);
-    } else if (!nextLine && !repeatLastLine) {
-      console.log(`End of line, current: ${this.currentTime}`);
-      this.currentLineTimer = null;
-      return;
+    if (
+      this.currentTab === 'COMMENT' &&
+      this.currentTime < this.currentLine.start
+    ) {
+      sec = 1;
+    } else {
+      let nextLine = this.lines[this.currentLineNum + 1];
+      if (nextLine && !repeatLastLine) {
+        sec += (nextLine.start - (this.currentLine.start + lineDuration)) / 2;
+        // console.log(`current: ${this.currentTime}, start: ${this.currentLine.start}, dur: ${this.currentLine.dur}, wait: ${sec}`);
+      } else if (!nextLine && !repeatLastLine) {
+        console.log(`End of line, current: ${this.currentTime}`);
+        this.currentLineTimer = null;
+        return;
+      }
     }
 
     this.currentLineTimer = setTimeout(() => {
@@ -539,7 +546,7 @@ export class CaptionManComponent implements OnInit {
       }
 
       if (this.currentTab === 'COMMENT') {
-        this.genBullets(this.currentLine.start);
+        this.genBullets(this.ytb.getCurrentTime());
       }
     }
   }

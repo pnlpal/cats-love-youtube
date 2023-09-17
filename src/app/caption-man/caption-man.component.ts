@@ -56,7 +56,7 @@ export class CaptionManComponent implements OnInit {
   currentLineTop = 0;
   settings = {
     darkMode: false,
-    timestamp: false,
+    timestamp: true,
     fontSize: 16,
   };
 

@@ -325,13 +325,7 @@ export class CaptionManComponent implements OnInit {
   async getData() {
     if (this.loading) return;
 
-    if (this.currentTab === 'COMMENT' && !this.lines.length) {
-      this.loading = true;
-      this.lines = await this.asyncSend('getComments', {
-        videoId: this.currentVid,
-      });
-      this.loading = false;
-    } else if (this.currentTab === 'CAPTION' && !this.captionTracks.length) {
+    if (!this.captionTracks.length) {
       this.loading = true;
       this.captionTracks = await this.asyncSend('getCaptionTracks', {
         videoId: this.currentVid,
@@ -340,8 +334,15 @@ export class CaptionManComponent implements OnInit {
       if (!this.captionTracks.length) {
         this.currentTab = 'COMMENT';
         this.noCaptions = true;
-        return this.getData();
       }
+    }
+
+    if (this.currentTab === 'COMMENT' && !this.lines.length) {
+      this.loading = true;
+      this.lines = await this.asyncSend('getComments', {
+        videoId: this.currentVid,
+      });
+      this.loading = false;
     }
 
     if (this.currentTab === 'CAPTION' && !this.lines.length) {

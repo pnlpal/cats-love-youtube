@@ -33,7 +33,10 @@ MongoClient.connect(mongoURL, { useUnifiedTopology: true }, (err, client) => {
   Comment.createIndex({ videoId: 1, start: 1, createdAt: 1 });
 
   Caption = db.collection("Caption");
-  Caption.createIndex({ videoId: 1, languageCode: 1 }, { unique: true });
+  Caption.createIndex(
+    { videoId: 1, languageCode: 1, languageName: 1 },
+    { unique: true }
+  );
 });
 
 // Express routes
@@ -106,11 +109,15 @@ const getCaptionTracks = async ({ videoId }, socket) => {
     handleError(socket, "Error getting cations", err);
   }
 };
-const getCaption = async ({ videoId, languageCode }, socket) => {
+const getCaption = async ({ videoId, languageCode, languageName }, socket) => {
   try {
-    return await Caption.findOne({ videoId, languageCode });
+    return await Caption.findOne({ videoId, languageCode, languageName });
   } catch (err) {
-    handleError(socket, "Error getting cation of " + languageCode, err);
+    handleError(
+      socket,
+      `Error getting cation of ${languageName}(${languageCode})`,
+      err
+    );
   }
 };
 
@@ -137,7 +144,10 @@ const handleCaption = async (
   } catch (err) {
     handleError(
       socket,
-      "Error handling caption of " + videoId + " Of " + languageCode,
+      "Error handling caption of " +
+        videoId +
+        " Of " +
+        `${languageName}(${languageCode})`,
       err
     );
   }

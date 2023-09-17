@@ -272,12 +272,12 @@ export class CaptionManComponent implements OnInit {
   }
 
   async changeCaption(event, track) {
-    if (!track?.languageCode) {
+    if (!track?.languageName) {
       return;
     }
 
     const idx = this.selectedTracks.findIndex(
-      (t) => t.languageCode === track.languageCode
+      (t) => t.languageName === track.languageName
     );
     if (idx >= 0) {
       this.selectedTracks.splice(idx, 1);
@@ -292,6 +292,7 @@ export class CaptionManComponent implements OnInit {
       const captions = await this.asyncSend('getCaption', {
         videoId,
         languageCode: track.languageCode,
+        languageName: track.languageName,
       }).then(({ xml }) => {
         return $(xml)
           .find('text')

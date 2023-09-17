@@ -545,7 +545,7 @@ export class CaptionManComponent implements OnInit {
   }
 
   repeat(ev, i) {
-    const keypressed = ev.ctrlKey || ev.altKey;
+    const keypressed = ev.ctrlKey || ev.altKey || ev.metaKey;
 
     if (keypressed) {
       if (this.repeatA >= 0) {

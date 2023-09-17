@@ -390,10 +390,14 @@ export class CaptionManComponent implements OnInit {
 
       if (!this.lines.length) {
         const defaultTrack =
-          this.captionTracks.find((x) => x.en === 'en') ||
-          this.captionTracks.find((x) => x.en === 'es') ||
-          this.captionTracks.find((x) => x.en === 'ja') ||
-          this.captionTracks.find((x) => x.en === 'zh-CN') ||
+          this.captionTracks.find((x) => x.languageCode === 'en') ||
+          this.captionTracks.find((x) => x.languageCode === 'en-US') ||
+          this.captionTracks.find((x) => x.languageCode === 'en-GB') ||
+          this.captionTracks.find((x) => x.languageCode === 'es-US') ||
+          this.captionTracks.find((x) => x.languageCode === 'es') ||
+          this.captionTracks.find((x) => x.languageCode === 'ja') ||
+          this.captionTracks.find((x) => x.languageCode === 'zh-CN') ||
+          this.captionTracks.find((x) => x.languageCode === 'zh') ||
           this.captionTracks[0];
         await this.changeCaption(null, defaultTrack);
       }

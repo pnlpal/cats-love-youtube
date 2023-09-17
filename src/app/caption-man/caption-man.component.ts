@@ -378,7 +378,7 @@ export class CaptionManComponent implements OnInit {
         try {
           return JSON.parse(localStorage.getItem('last-language-names') || '');
         } catch (error) {
-          return ['English'];
+          return ['English', 'Japanese'];
         }
       })();
 

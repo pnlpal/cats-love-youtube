@@ -371,6 +371,8 @@ export class CaptionManComponent implements OnInit {
         videoId: this.currentVid,
       });
       this.loading = false;
+
+      this.scrollToTime(this.ytb.getCurrentTime());
     }
 
     if (this.currentTab === 'CAPTION' && !this.lines.length) {
@@ -406,6 +408,7 @@ export class CaptionManComponent implements OnInit {
   }
 
   genBullets(t: number) {
+    // console.log('genBullet:', t);
     this.lines.forEach((line) => {
       const diff = t - line.start;
       if (line.start <= t && diff < bulletDuration) {
@@ -414,6 +417,8 @@ export class CaptionManComponent implements OnInit {
           const topPercent =
             ((line.yPos - 1) % 10) * 10 + Math.floor((line.yPos - 1) / 10);
           line.top = (this.playerHeight - 50) * topPercent * 0.01 + 'px';
+
+          // console.log('push line: ', line);
           this.ytb.bullets.push(line);
           lineYposTracker += 1;
         }
@@ -506,6 +511,7 @@ export class CaptionManComponent implements OnInit {
       }
     }
 
+    // console.log('wait: ', sec, 'currentTime:', this.currentTime);
     this.currentLineTimer = setTimeout(() => {
       if (this.currentLineNum === this.repeatB) {
         // in repeat

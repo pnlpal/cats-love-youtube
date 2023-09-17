@@ -33,7 +33,7 @@ MongoClient.connect(mongoURL, { useUnifiedTopology: true }, (err, client) => {
   Comment.createIndex({ videoId: 1, start: 1, createdAt: 1 });
 
   Caption = db.collection("Caption");
-  Caption.createIndex({ videoId: 1, languageCode: 1, createdAt: 1 });
+  Caption.createIndex({ videoId: 1, languageCode: 1 }, { unique: true });
 });
 
 // Express routes

@@ -149,6 +149,33 @@ export class CaptionManComponent implements OnInit {
     this.initYtb();
   }
 
+  async fetchCaptionsFromYtb(videoId) {
+    if (!(window as any).resolveCaptions) {
+      window.addEventListener('message', (event) => {
+        if (
+          event.data?.type === 'captions' &&
+          event.origin === 'https://www.youtube.com'
+        ) {
+          // console.log('recieved', event.data, event.origin);
+          (window as any).resolveCaptions?.(event.data);
+        }
+      });
+    }
+
+    return new Promise((resolve) => {
+      $('#ytb-player')[0].contentWindow.postMessage(
+        {
+          type: 'getCaptions',
+          videoId,
+          videoLink: `https://www.youtube.com/watch?v=${videoId}`,
+        },
+        'https://www.youtube.com'
+      );
+
+      (window as any).resolveCaptions = resolve;
+    });
+  }
+
   async changeTab(name) {
     if (this.noCaptions || name === this.currentTab) return;
 
@@ -331,9 +358,9 @@ export class CaptionManComponent implements OnInit {
         videoId: this.currentVid,
       });
       this.loading = false;
-      if (!this.captionTracks.length) {
+      this.noCaptions = !this.captionTracks.length;
+      if (this.noCaptions) {
         this.currentTab = 'COMMENT';
-        this.noCaptions = true;
       }
     }
 
@@ -395,13 +422,24 @@ export class CaptionManComponent implements OnInit {
 
   async initYtb() {
     this.ytb.videoId.subscribe(async (vid) => {
-      console.log('video id: ', vid);
       if (!vid) return;
+      console.log('video id: ', vid);
       this.currentVid = vid;
       this.reset();
 
       this.socket.emit('joinRoom', { videoId: vid, manTab: this.currentTab });
-      this.getData();
+      await this.getData();
+
+      if (this.noCaptions) {
+        const result: any = await this.fetchCaptionsFromYtb(vid);
+        if (result.videoId === vid && result.captions?.length) {
+          for (const caption of result.captions) {
+            await this.asyncSend('handleCaption', caption);
+          }
+
+          this.getData();
+        }
+      }
     });
 
     await this.ytb.init();

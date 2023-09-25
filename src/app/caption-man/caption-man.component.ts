@@ -383,22 +383,32 @@ export class CaptionManComponent implements OnInit {
       })();
 
       for (const name of this.defaultLanguages) {
-        const track = this.captionTracks.find((x) => x.languageName === name);
+        const track =
+          this.captionTracks.find((x) => x.languageName === name) ||
+          this.captionTracks.find(
+            (x) =>
+              x.languageName.toLowerCase().includes(name.toLowerCase()) ||
+              !x.languageName.toLowerCase().includes('auto')
+          ) ||
+          this.captionTracks.find((x) =>
+            x.languageName.toLowerCase().includes(name.toLowerCase())
+          );
         if (track) {
           await this.changeCaption(null, track);
         }
       }
 
       if (!this.lines.length) {
+        const findLang = (lang) => (x) =>
+          x.languageName.toLowerCase().includes(lang.toLowerCase()) &&
+          !x.languageName.toLowerCase().includes('auto');
         const defaultTrack =
+          this.captionTracks.find(findLang('English')) ||
+          this.captionTracks.find(findLang('Swedish')) ||
+          this.captionTracks.find(findLang('Japanese')) ||
+          this.captionTracks.find(findLang('Chinese')) ||
           this.captionTracks.find((x) => x.languageCode === 'en') ||
           this.captionTracks.find((x) => x.languageCode === 'en-US') ||
-          this.captionTracks.find((x) => x.languageCode === 'en-GB') ||
-          this.captionTracks.find((x) => x.languageCode === 'es-US') ||
-          this.captionTracks.find((x) => x.languageCode === 'es') ||
-          this.captionTracks.find((x) => x.languageCode === 'ja') ||
-          this.captionTracks.find((x) => x.languageCode === 'zh-CN') ||
-          this.captionTracks.find((x) => x.languageCode === 'zh') ||
           this.captionTracks[0];
         await this.changeCaption(null, defaultTrack);
       }

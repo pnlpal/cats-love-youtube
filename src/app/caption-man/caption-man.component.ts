@@ -64,6 +64,7 @@ export class CaptionManComponent implements OnInit {
   playerHeight = 0;
 
   asciiCat = '';
+  hasDictionariezInstalled = false;
 
   constructor(private ytb: YtbService, private cd: ChangeDetectorRef) {
     if (localStorage.getItem('captionz-settings'))
@@ -177,7 +178,7 @@ export class CaptionManComponent implements OnInit {
   }
 
   async changeTab(name) {
-    if (this.noCaptions || name === this.currentTab) return;
+    if (name === this.currentTab) return;
 
     this.reset();
     this.currentTab = name;
@@ -360,9 +361,6 @@ export class CaptionManComponent implements OnInit {
       });
       this.loading = false;
       this.noCaptions = !this.captionTracks.length;
-      if (this.noCaptions) {
-        this.currentTab = 'COMMENT';
-      }
     }
 
     if (this.currentTab === 'COMMENT' && !this.lines.length) {
@@ -440,15 +438,20 @@ export class CaptionManComponent implements OnInit {
       this.socket.emit('joinRoom', { videoId: vid, manTab: this.currentTab });
       await this.getData();
 
-      if (this.noCaptions) {
+      this.hasDictionariezInstalled = $('.dictionaries-tooltip').length > 0;
+      // console.log('hasDictionariezInstalled:', this.hasDictionariezInstalled);
+
+      if (this.noCaptions && this.hasDictionariezInstalled) {
+        this.loading = true;
         const result: any = await this.fetchCaptionsFromYtb(vid);
         if (result.videoId === vid && result.captions?.length) {
           for (const caption of result.captions) {
             await this.asyncSend('handleCaption', caption);
           }
-
-          this.getData();
+          this.loading = false;
+          await this.getData();
         }
+        this.loading = false;
       }
     });
 

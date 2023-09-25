@@ -77,9 +77,23 @@
         [class.dark-mode]="settings.darkMode"
       >
         <pre>{{ asciiCat }}</pre>
-        <p>Be the first to comment on this video.</p>
-        <p>And be nice.</p>
-        <p>Meow!</p>
+        <div *ngIf="currentTab === 'CAPTION'">
+          <p>
+            <a href="https://github.com/pnlpal/dictionariez"
+              >Download Dictionariez to get captions for this video.</a
+            >
+          </p>
+          <p>
+            Dictionariez is an open-source browser extension that helps you
+            learning Languages.
+          </p>
+          <p>Meow!</p>
+        </div>
+        <div *ngIf="currentTab === 'COMMENT'">
+          <p>Be the first to comment on this video.</p>
+          <p>And be nice.</p>
+          <p>Meow!</p>
+        </div>
       </div>
       <ng-container *ngIf="!loading && lines">
         <li

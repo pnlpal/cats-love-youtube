@@ -20,24 +20,28 @@ const mongoURL = "mongodb://localhost:27017";
 const dbName = "cats-love-youtube";
 let db, Comment, Caption;
 
-MongoClient.connect(mongoURL, { useUnifiedTopology: true }, (err, client) => {
-  if (err) {
-    console.log("Mongo connection error", err);
-    throw err;
+MongoClient.connect(
+  process.env.MONGODB || mongoURL,
+  { useUnifiedTopology: true },
+  (err, client) => {
+    if (err) {
+      console.log("Mongo connection error", err);
+      throw err;
+    }
+
+    console.log("Connected to MongoDB");
+    db = client.db(dbName);
+
+    Comment = db.collection("Comment");
+    Comment.createIndex({ videoId: 1, start: 1, createdAt: 1 });
+
+    Caption = db.collection("Caption");
+    Caption.createIndex(
+      { videoId: 1, languageCode: 1, languageName: 1 },
+      { unique: true }
+    );
   }
-
-  console.log("Connected to MongoDB");
-  db = client.db(dbName);
-
-  Comment = db.collection("Comment");
-  Comment.createIndex({ videoId: 1, start: 1, createdAt: 1 });
-
-  Caption = db.collection("Caption");
-  Caption.createIndex(
-    { videoId: 1, languageCode: 1, languageName: 1 },
-    { unique: true }
-  );
-});
+);
 
 // Express routes
 app.get("/", (req, res) => {

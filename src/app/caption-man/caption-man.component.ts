@@ -60,6 +60,7 @@ export class CaptionManComponent implements OnInit {
     fontSize: 16,
   };
 
+  openShareTimer = null;
   openedShareBefore = false;
   playerHeight = 0;
 
@@ -483,16 +484,18 @@ export class CaptionManComponent implements OnInit {
         console.log('on start playing: ', t);
         this.scrollToTime(t);
       }
+      clearTimeout(this.openShareTimer);
     };
     this.ytb.onPaused = () => {
       clearTimeout(this.currentLineTimer);
       this.currentLineTimer = null;
 
       if (!this.openedShareBefore && !this.isSmallScreen()) {
-        setTimeout(() => {
+        clearTimeout(this.openShareTimer);
+        this.openShareTimer = setTimeout(() => {
           $('app-shares .modal').modal('show');
-        }, 2000);
-        this.openedShareBefore = true;
+          this.openedShareBefore = true;
+        }, 5000);
       }
     };
   }

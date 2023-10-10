@@ -43,7 +43,7 @@ export class YtbService {
               (window as any).player = this.player;
 
               const lastVid =
-                localStorage.getItem('last-video-id') || 'J_z-W4UVHkw';
+                localStorage.getItem('last-video-id') || 'o_XVt5rdpFY';
               const lastPlaylistId = localStorage.getItem('last-playlist-id');
 
               if (lastPlaylistId) {

@@ -5,6 +5,19 @@ import { YtbService } from './ytb.service';
 
 declare var $: any;
 
+function updateUrlWithVideoInfo(vid: string, playlistId) {
+  try {
+    const searchParams = new URLSearchParams(window.top.location.search);
+    searchParams.set('v', vid);
+    if (playlistId) {
+      searchParams.set('list', playlistId);
+    } else {
+      searchParams.delete('list');
+    }
+    window.top.location.search = searchParams.toString();
+  } catch (error) {}
+}
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -16,7 +29,20 @@ export class AppComponent {
   videoUrlCtrl = new FormControl();
   invalidUrl = false;
   inFullscreen = false;
-  playingVideoOfParam = false;
+  embededMode = (() => {
+    try {
+      if (window.top !== window.self) {
+        return ![
+          '/captionz',
+          '/cats-love-youtube',
+          '/captionz/',
+          '/cats-love-youtube/',
+        ].includes(window.top.location.pathname);
+      }
+    } catch (error) {
+      return true;
+    }
+  })();
 
   bullets = [];
 
@@ -51,6 +77,7 @@ export class AppComponent {
     },
     {
       playlistId: 'PL30C13C91CFFEFEA6',
+      videoId: 'kBdfcR-8hEY',
       url: 'https://www.youtube.com/watch?v=kBdfcR-8hEY&list=PL30C13C91CFFEFEA6&index=1&ab_channel=HarvardUniversity',
       img: 'https://pnlpal.dev/assets/uploads/files/1608889019866-9bbd99c2-3fed-4fcf-9ba5-f25f027cec5d-image.png',
       title: "Justice: What's The Right Thing To Do?",
@@ -78,9 +105,7 @@ export class AppComponent {
     };
 
     const parsed = parseParams(window.location.search);
-    if (this.ytb.saveLast(parsed)) {
-      this.playingVideoOfParam = true;
-    } else {
+    if (!this.ytb.saveLast(parsed)) {
       try {
         const parsedTop = parseParams(window.top.location.search);
         // console.log('Parsed params from top window url: ', parsedTop);
@@ -113,6 +138,8 @@ export class AppComponent {
           this.invalidUrl = true;
           this.ytb.playLink = '';
         }
+
+        updateUrlWithVideoInfo(parsed.videoId, parsed.playlistId);
       });
 
     document.addEventListener('fullscreenchange', () => {
@@ -134,6 +161,7 @@ export class AppComponent {
   openSuggestion(s) {
     if (s.playlistId) this.ytb.loadPlaylistById(s.playlistId);
     else this.ytb.loadVideoById(s.videoId);
+    updateUrlWithVideoInfo(s.videoId, s.playlistId);
   }
   openShares() {
     $('app-shares .modal').modal('show');

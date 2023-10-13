@@ -493,8 +493,10 @@ export class CaptionManComponent implements OnInit {
       if (!this.openedShareBefore && !this.isSmallScreen()) {
         clearTimeout(this.openShareTimer);
         this.openShareTimer = setTimeout(() => {
-          $('app-shares .modal').modal('show');
-          this.openedShareBefore = true;
+          if (!this.ytb.playing) {
+            $('app-shares .modal').modal('show');
+            this.openedShareBefore = true;
+          }
         }, 5000);
       }
     };

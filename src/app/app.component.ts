@@ -90,11 +90,6 @@ export class AppComponent {
         console.warn(error);
       }
     }
-
-    if (window.self === window.top && location.hostname !== 'localhost') {
-      // not in iframe
-      location.replace('/cats-love-youtube');
-    }
   }
 
   ngOnInit() {

@@ -18,7 +18,7 @@ const asciiCat = readFileSync(__dirname + "/assets/ascii-cat.txt").toString();
 // Mongo config
 const mongoURL = "mongodb://localhost:27017";
 const dbName = "cats-love-youtube";
-let db, Comment, Caption;
+let db, Comment, Caption, VideoInfo;
 
 MongoClient.connect(
   process.env.MONGODB || mongoURL,
@@ -40,6 +40,10 @@ MongoClient.connect(
       { videoId: 1, languageCode: 1, languageName: 1 },
       { unique: true }
     );
+
+    VideoInfo = db.collection("VideoInfo");
+    VideoInfo.createIndex({ videoId: 1 }, { unique: true });
+    VideoInfo.createIndex({ createdAt: 1 });
   }
 );
 
@@ -156,6 +160,33 @@ const handleCaption = async (
     );
   }
 };
+const getVideoInfo = async ({ videoId }, socket) => {
+  try {
+    return await VideoInfo.findOne({ videoId });
+  } catch (err) {
+    handleError(socket, `Error getting video info of ${videoId}`, err);
+  }
+};
+const handleVideoInfo = async (
+  { videoId, title, snapshot, shortDescription },
+  socket
+) => {
+  try {
+    if (!title?.length || !snapshot?.length || !videoId?.length) {
+      throw new Error("VideoInfo is invalid!");
+    }
+
+    return await VideoInfo.insertOne({
+      videoId,
+      title,
+      snapshot,
+      shortDescription,
+      createdAt: new Date(),
+    });
+  } catch (err) {
+    handleError(socket, "Error handling video info of " + videoId, err);
+  }
+};
 
 // Socket.io
 io.on("connection", (socket) => {
@@ -190,6 +221,12 @@ io.on("connection", (socket) => {
   });
   socket.on("handleCaption", (data, callback) => {
     handleCaption(data, socket).then(callback);
+  });
+  socket.on("getVideoInfo", (data, callback) => {
+    getVideoInfo(data, socket).then(callback);
+  });
+  socket.on("handleVideoInfo", (data, callback) => {
+    handleVideoInfo(data, socket).then(callback);
   });
 
   socket.on("joinRoom", ({ videoId }) => {

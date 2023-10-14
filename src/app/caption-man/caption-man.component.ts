@@ -26,6 +26,7 @@ export class CaptionManComponent implements OnInit {
 
   noCaptions = false;
   currentTab = localStorage.getItem('last-man-tab') || 'CAPTION';
+  videoInfo = null;
 
   username = localStorage.username || '';
   usernameCtrl = new FormControl();
@@ -95,6 +96,8 @@ export class CaptionManComponent implements OnInit {
     this.currentTab = localStorage.getItem('last-man-tab') || 'CAPTION';
 
     this.ytb.bullets = [];
+
+    this.videoInfo = null;
   }
 
   ngOnInit(): void {
@@ -151,7 +154,15 @@ export class CaptionManComponent implements OnInit {
     this.initYtb();
   }
 
-  async fetchCaptionsFromYtb(videoId) {
+  async fetchCaptionsFromYtb(
+    videoId,
+    noCaptions = false,
+    noVideoInfo = false,
+    noRetry = false
+  ) {
+    const waitingTime = noCaptions ? 3000 : 10000;
+    let waitingTimer;
+
     if (!(window as any).resolveCaptions) {
       window.addEventListener('message', (event) => {
         if (
@@ -160,6 +171,7 @@ export class CaptionManComponent implements OnInit {
         ) {
           // console.log('recieved', event.data, event.origin);
           (window as any).resolveCaptions?.(event.data);
+          clearTimeout(waitingTimer);
         }
       });
     }
@@ -170,11 +182,25 @@ export class CaptionManComponent implements OnInit {
           type: 'getCaptions',
           videoId,
           videoLink: `https://www.youtube.com/watch?v=${videoId}`,
+          noCaptions,
+          noVideoInfo,
         },
         'https://www.youtube.com'
       );
 
       (window as any).resolveCaptions = resolve;
+
+      if (!noRetry) {
+        waitingTimer = setTimeout(() => {
+          // console.log('fetch from youtube timeout, retry...');
+          this.fetchCaptionsFromYtb(
+            videoId,
+            noCaptions,
+            noVideoInfo,
+            true
+          ).then(resolve);
+        }, waitingTime);
+      }
     });
   }
 
@@ -355,6 +381,14 @@ export class CaptionManComponent implements OnInit {
   async getData() {
     if (this.loading) return;
 
+    if (!this.videoInfo) {
+      this.loading = true;
+      this.videoInfo = await this.asyncSend('getVideoInfo', {
+        videoId: this.currentVid,
+      });
+      this.loading = false;
+    }
+
     if (!this.captionTracks.length) {
       this.loading = true;
       this.captionTracks = await this.asyncSend('getCaptionTracks', {
@@ -456,11 +490,24 @@ export class CaptionManComponent implements OnInit {
         this.loading = true;
         const result: any = await this.fetchCaptionsFromYtb(vid);
         if (result.videoId === vid && result.captions?.length) {
+          await this.asyncSend('handleVideoInfo', result.videoInfo);
+          this.videoInfo = result.videoInfo;
+
           for (const caption of result.captions) {
             await this.asyncSend('handleCaption', caption);
           }
           this.loading = false;
           await this.getData();
+        }
+        this.loading = false;
+      } else if (!this.videoInfo && this.hasDictionariezInstalled) {
+        this.loading = true;
+        // console.log('need to get video info alone');
+        const result: any = await this.fetchCaptionsFromYtb(vid, true);
+        // console.log('get info: ', result);
+        if (result.videoId === vid && result.videoInfo) {
+          await this.asyncSend('handleVideoInfo', result.videoInfo);
+          this.videoInfo = result.videoInfo;
         }
         this.loading = false;
       }

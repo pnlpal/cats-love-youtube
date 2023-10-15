@@ -159,7 +159,7 @@ export class CaptionManComponent implements OnInit {
     noCaptions = false,
     noRetry = false
   ) {
-    const waitingTime = noCaptions ? 3000 : 10000;
+    const waitingTime = noCaptions ? 1000 : 10000;
     let waitingTimer;
 
     if (!(window as any).resolveCaptions) {
@@ -175,7 +175,7 @@ export class CaptionManComponent implements OnInit {
       });
     }
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       $('#ytb-player')[0].contentWindow.postMessage(
         {
           type: noCaptions ? 'getVideoInfo' : 'getCaptions',
@@ -188,10 +188,15 @@ export class CaptionManComponent implements OnInit {
 
       (window as any).resolveCaptions = resolve;
 
-      if (!noRetry) {
+      if (noRetry) {
+        waitingTimer = setTimeout(reject, waitingTime);
+      } else {
         waitingTimer = setTimeout(() => {
           // console.log('fetch from youtube timeout, retry...');
-          this.fetchCaptionsFromYtb(videoId, noCaptions, true).then(resolve);
+          this.fetchCaptionsFromYtb(videoId, noCaptions, true).then(
+            resolve,
+            reject
+          );
         }, waitingTime);
       }
     });
@@ -498,7 +503,11 @@ export class CaptionManComponent implements OnInit {
       } else if (!this.videoInfo && this.hasDictionariezInstalled) {
         this.loading = true;
         // console.log('need to get video info alone');
-        const result: any = await this.fetchCaptionsFromYtb(vid, true);
+        const result: any = await this.fetchCaptionsFromYtb(vid, true).catch(
+          () => {
+            return {};
+          }
+        );
         // console.log('get info: ', result);
         if (result.videoId === vid && result.videoInfo) {
           await this.asyncSend('handleVideoInfo', result.videoInfo);

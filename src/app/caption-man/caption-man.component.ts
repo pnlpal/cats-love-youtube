@@ -152,6 +152,7 @@ export class CaptionManComponent implements OnInit {
       });
 
     this.initYtb();
+    this.keyboardShortcuts();
   }
 
   async fetchCaptionsFromYtb(
@@ -705,5 +706,20 @@ export class CaptionManComponent implements OnInit {
   }
   changeFontSize(n) {
     $('ul.caption-ul').css('font-size', `${n}px`);
+  }
+
+  keyboardShortcuts() {
+    const checkEditable = (el) => {
+      return (
+        el.isContentEditable ||
+        ['input', 'textarea'].includes(el.nodeName.toLowerCase())
+      );
+    };
+    $(document).bind('keydown', (event: KeyboardEvent) => {
+      if (!event.altKey && !event.ctrlKey && !checkEditable(event.target)) {
+        if (event.key === 'f') this.fullscreen();
+        else if (event.key === 's') this.openSettings();
+      }
+    });
   }
 }

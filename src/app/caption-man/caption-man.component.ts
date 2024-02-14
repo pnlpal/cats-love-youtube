@@ -421,7 +421,7 @@ export class CaptionManComponent implements OnInit {
           this.captionTracks.find((x) => x.languageName === name) ||
           this.captionTracks.find(
             (x) =>
-              x.languageName.toLowerCase().includes(name.toLowerCase()) ||
+              x.languageName.toLowerCase().includes(name.toLowerCase()) &&
               !x.languageName.toLowerCase().includes('auto')
           ) ||
           this.captionTracks.find((x) =>

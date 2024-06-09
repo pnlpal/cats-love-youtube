@@ -172,6 +172,28 @@ export class CaptionManComponent implements OnInit {
           // console.log('recieved', event.data, event.origin);
           (window as any).resolveCaptions?.(event.data);
           clearTimeout(waitingTimer);
+        } else if (
+          event.data?.type === 'rawVideoData' &&
+          event.origin === 'https://www.youtube.com'
+        ) {
+          // console.log('recieved raw videoData', event.data, event.origin);
+          let videoData = event.data.videoData;
+          if (typeof event.data.videoData === 'string') {
+            videoData = eval(
+              '(function() {return ' + event.data.videoData + '})();'
+            );
+          }
+
+          $('#ytb-player')[0].contentWindow.postMessage(
+            {
+              type: noCaptions ? 'getVideoInfo' : 'getCaptions',
+              videoId,
+              videoLink: `https://www.youtube.com/watch?v=${videoId}`,
+              noCaptions,
+              videoData,
+            },
+            'https://www.youtube.com'
+          );
         }
       });
     }
@@ -183,6 +205,7 @@ export class CaptionManComponent implements OnInit {
           videoId,
           videoLink: `https://www.youtube.com/watch?v=${videoId}`,
           noCaptions,
+          getRawVideoDataFirst: true,
         },
         'https://www.youtube.com'
       );

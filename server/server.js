@@ -4,6 +4,17 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 const { MongoClient } = require("mongodb");
 
+let config = {
+  mongo: {
+    host: "127.0.0.1",
+    port: 27017,
+    database: "cats-love-youtube",
+  },
+};
+try {
+  config = require("./config.json");
+} catch (_) {}
+
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
@@ -16,13 +27,17 @@ const io = new Server(httpServer, {
 const asciiCat = readFileSync(__dirname + "/assets/ascii-cat.txt").toString();
 
 // Mongo config
-const mongoURL = "mongodb://127.0.0.1:27017";
-const dbName = "cats-love-youtube";
+const mongoAuth = config.mongo.username
+  ? `${config.mongo.username}:${config.mongo.password}@`
+  : "";
+const mongoURL = `mongodb://${mongoAuth}${config.mongo.host}:${config.mongo.port}/${config.mongo.database}`;
 let db, Comment, Caption, VideoInfo;
 
 MongoClient.connect(
   process.env.MONGODB || mongoURL,
-  { useUnifiedTopology: true },
+  {
+    useUnifiedTopology: true,
+  },
   (err, client) => {
     if (err) {
       console.log("Mongo connection error", err);
@@ -30,7 +45,7 @@ MongoClient.connect(
     }
 
     console.log("Connected to MongoDB");
-    db = client.db(dbName);
+    db = client.db(config.mongo.database);
 
     Comment = db.collection("Comment");
     Comment.createIndex({ videoId: 1, start: 1, createdAt: 1 });
